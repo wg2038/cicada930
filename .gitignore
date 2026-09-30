@@ -1,0 +1,53 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Java / Kotlin class files & outputs
+*.class
+bin/
+gen/
+out/
+build/
+app/build/
+.gradle/
+.kotlin/
+
+# Releases output
+releases/
+
+# Local configuration file
+local.properties
+*.jks
+*.keystore
+
+
+# Proguard folder
+proguard/
+
+# Log Files
+*.log
+
+# IntelliJ / Android Studio
+*.iml
+.idea/
+captures/
+.externalNativeBuild
+.cxx/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+env/
+
+# macOS
+.DS_Store
+
+# Temporary scratch
+scratch/
+
+# ETL Reports
+etl/*_report*.json
+etl/cache/

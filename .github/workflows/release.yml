@@ -1,0 +1,109 @@
+name: Release CI
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Android Platform 36
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Setup Keystore
+        id: keystore
+        run: |
+          if [ -n "${{ secrets.OPUSONE_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.OPUSONE_KEYSTORE_BASE64 }}" | base64 -d > "${RUNNER_TEMP}/release.keystore"
+            echo "has_keystore=true" >> "$GITHUB_OUTPUT"
+            echo "Keystore decoded successfully."
+          else
+            echo "has_keystore=false" >> "$GITHUB_OUTPUT"
+            echo "No custom keystore secret provided, falling back to debug signing."
+          fi
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
+        env:
+          OPUSONE_STORE_FILE: ${{ steps.keystore.outputs.has_keystore == 'true' && format('{0}/release.keystore', runner.temp) || '' }}
+          OPUSONE_STORE_PASSWORD: ${{ secrets.OPUSONE_STORE_PASSWORD }}
+          OPUSONE_KEY_ALIAS: ${{ secrets.OPUSONE_KEY_ALIAS }}
+          OPUSONE_KEY_PASSWORD: ${{ secrets.OPUSONE_KEY_PASSWORD }}
+
+      - name: Cleanup Keystore
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/release.keystore"
+
+      - name: Prepare Release Artifacts
+        id: prepare
+        run: |
+          TAG="${{ github.event.inputs.tag_name || github.ref_name }}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "Error: No release APK found!"
+            exit 1
+          fi
+
+          RELEASE_APK="Cicada-${TAG}.apk"
+          cp "$APK_PATH" "$RELEASE_APK"
+          sha256sum "$RELEASE_APK" > "${RELEASE_APK}.sha256"
+
+          MAPPING_PATH="app/build/outputs/mapping/release/mapping.txt"
+          if [ -f "$MAPPING_PATH" ]; then
+            cp "$MAPPING_PATH" "mapping-${TAG}.txt"
+          fi
+
+          echo "Prepared artifacts:"
+          ls -la Cicada-* mapping-* 2>/dev/null || true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.prepare.outputs.tag }}
+          name: Release ${{ steps.prepare.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            Cicada-*.apk
+            Cicada-*.apk.sha256
+            mapping-*.txt

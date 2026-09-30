@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- M3 DayNight 启动主题：消除冷启动闪白，与 Compose 层 OpusOneTheme 衔接 -->
+    <style name="Theme.OpusOne" parent="Theme.Material3.DayNight.NoActionBar" />
+</resources>

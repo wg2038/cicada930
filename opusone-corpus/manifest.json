@@ -1,0 +1,1046 @@
+{
+  "format": "opusone-corpus/1",
+  "chapters": {
+    "1": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 439,
+      "density": 87.3,
+      "layer": "refined"
+    },
+    "2": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 543,
+      "density": 117.5,
+      "layer": "refined"
+    },
+    "3": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 327,
+      "density": 83.9,
+      "layer": "refined"
+    },
+    "4": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1540,
+      "density": 143.3,
+      "layer": "refined"
+    },
+    "5": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1924,
+      "density": 180.4,
+      "layer": "refined"
+    },
+    "6": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 2253,
+      "density": 136.7,
+      "layer": "refined"
+    },
+    "7": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1696,
+      "density": 148.4,
+      "layer": "refined"
+    },
+    "8": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 2448,
+      "density": 204.3,
+      "layer": "refined"
+    },
+    "9": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 997,
+      "density": 177.0,
+      "layer": "refined"
+    },
+    "10": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1027,
+      "density": 144.3,
+      "layer": "refined"
+    },
+    "11": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 257,
+      "density": 137.8,
+      "layer": "refined"
+    },
+    "12": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1223,
+      "density": 149.7,
+      "layer": "refined"
+    },
+    "13": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 332,
+      "density": 84.3,
+      "layer": "refined"
+    },
+    "14": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 3635,
+      "density": 82.5,
+      "layer": "refined"
+    },
+    "15": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1956,
+      "density": 88.1,
+      "layer": "refined"
+    },
+    "16": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 924,
+      "density": 81.8,
+      "layer": "refined"
+    },
+    "17": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1576,
+      "density": 80.7,
+      "layer": "refined"
+    },
+    "18": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 2939,
+      "density": 127.8,
+      "layer": "refined"
+    },
+    "19": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 851,
+      "density": 87.0,
+      "layer": "refined"
+    },
+    "20": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1095,
+      "density": 87.7,
+      "layer": "refined"
+    },
+    "21": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1162,
+      "density": 93.8,
+      "layer": "refined"
+    },
+    "22": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1035,
+      "density": 93.3,
+      "layer": "refined"
+    },
+    "23": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 279,
+      "density": 91.1,
+      "layer": "refined"
+    },
+    "24": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 745,
+      "density": 86.5,
+      "layer": "refined"
+    },
+    "25": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 370,
+      "density": 110.9,
+      "layer": "refined"
+    },
+    "26": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 389,
+      "density": 87.2,
+      "layer": "refined"
+    },
+    "27": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 938,
+      "density": 89.6,
+      "layer": "refined"
+    },
+    "28": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1285,
+      "density": 98.7,
+      "layer": "refined"
+    },
+    "29": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 237,
+      "density": 108.2,
+      "layer": "refined"
+    },
+    "30": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 922,
+      "density": 134.4,
+      "layer": "refined"
+    },
+    "31": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 704,
+      "density": 145.8,
+      "layer": "refined"
+    },
+    "32": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1149,
+      "density": 124.7,
+      "layer": "refined"
+    },
+    "33": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1040,
+      "density": 139.8,
+      "layer": "refined"
+    },
+    "34": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 655,
+      "density": 196.1,
+      "layer": "refined"
+    },
+    "35": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 427,
+      "density": 127.7,
+      "layer": "refined"
+    },
+    "36": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 451,
+      "density": 140.0,
+      "layer": "refined"
+    },
+    "37": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 638,
+      "density": 142.5,
+      "layer": "refined"
+    },
+    "38": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 634,
+      "density": 113.0,
+      "layer": "refined"
+    },
+    "39": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 2090,
+      "density": 129.3,
+      "layer": "refined"
+    },
+    "40": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 2171,
+      "density": 157.0,
+      "layer": "refined"
+    },
+    "41": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 599,
+      "density": 120.7,
+      "layer": "refined"
+    },
+    "42": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 918,
+      "density": 142.9,
+      "layer": "refined"
+    },
+    "43": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1975,
+      "density": 135.9,
+      "layer": "refined"
+    },
+    "44": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1128,
+      "density": 163.4,
+      "layer": "refined"
+    },
+    "45": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 572,
+      "density": 177.5,
+      "layer": "refined"
+    },
+    "46": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1066,
+      "density": 144.0,
+      "layer": "refined"
+    },
+    "47": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "spans": 1446,
+      "density": 148.0,
+      "layer": "refined",
+      "validated_at": "2026-09-12T17:14:09"
+    },
+    "48": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 575,
+      "density": 143.2,
+      "layer": "refined"
+    },
+    "49": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "spans": 827,
+      "density": 159.2,
+      "layer": "refined",
+      "validated_at": "2026-09-12T17:14:09"
+    },
+    "50": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "spans": 272,
+      "density": 264.8,
+      "layer": "refined",
+      "validated_at": "2026-09-12T17:14:09"
+    },
+    "51": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 226,
+      "density": 158.2,
+      "layer": "refined"
+    },
+    "52": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 706,
+      "density": 159.8,
+      "layer": "refined"
+    },
+    "53": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 204,
+      "density": 86.6,
+      "layer": "refined"
+    },
+    "54": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 305,
+      "density": 119.0,
+      "layer": "refined"
+    },
+    "55": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 712,
+      "density": 138.2,
+      "layer": "refined"
+    },
+    "56": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 591,
+      "density": 131.0,
+      "layer": "refined"
+    },
+    "57": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 386,
+      "density": 107.7,
+      "layer": "refined"
+    },
+    "58": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 652,
+      "density": 167.4,
+      "layer": "refined"
+    },
+    "59": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 509,
+      "density": 170.6,
+      "layer": "refined"
+    },
+    "60": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 609,
+      "density": 119.5,
+      "layer": "refined"
+    },
+    "61": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 126,
+      "density": 116.9,
+      "layer": "refined"
+    },
+    "62": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 182,
+      "density": 136.9,
+      "layer": "refined"
+    },
+    "63": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 291,
+      "density": 104.6,
+      "layer": "refined"
+    },
+    "64": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 136,
+      "density": 131.4,
+      "layer": "refined"
+    },
+    "65": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 273,
+      "density": 93.4,
+      "layer": "refined"
+    },
+    "66": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 515,
+      "density": 129.2,
+      "layer": "refined"
+    },
+    "67": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 648,
+      "density": 93.4,
+      "layer": "refined"
+    },
+    "68": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 300,
+      "density": 87.5,
+      "layer": "refined"
+    },
+    "69": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1105,
+      "density": 121.2,
+      "layer": "refined"
+    },
+    "70": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1087,
+      "density": 127.7,
+      "layer": "refined"
+    },
+    "71": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 511,
+      "density": 123.0,
+      "layer": "refined"
+    },
+    "72": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 339,
+      "density": 154.1,
+      "layer": "refined"
+    },
+    "73": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 499,
+      "density": 151.6,
+      "layer": "refined"
+    },
+    "74": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 272,
+      "density": 147.6,
+      "layer": "refined"
+    },
+    "75": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 530,
+      "density": 114.8,
+      "layer": "refined"
+    },
+    "76": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 396,
+      "density": 91.5,
+      "layer": "refined"
+    },
+    "77": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 272,
+      "density": 81.0,
+      "layer": "refined"
+    },
+    "78": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 514,
+      "density": 136.9,
+      "layer": "refined"
+    },
+    "79": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1251,
+      "density": 134.1,
+      "layer": "refined"
+    },
+    "80": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 413,
+      "density": 155.8,
+      "layer": "refined"
+    },
+    "81": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 573,
+      "density": 117.4,
+      "layer": "refined"
+    },
+    "82": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 177,
+      "density": 118.6,
+      "layer": "refined"
+    },
+    "83": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 435,
+      "density": 88.5,
+      "layer": "refined"
+    },
+    "84": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "spans": 466,
+      "density": 110.3,
+      "layer": "refined",
+      "validated_at": "2026-09-12T17:14:09"
+    },
+    "85": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 201,
+      "density": 89.2,
+      "layer": "refined"
+    },
+    "86": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 644,
+      "density": 90.2,
+      "layer": "refined"
+    },
+    "87": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "spans": 1277,
+      "density": 141.3,
+      "layer": "refined",
+      "validated_at": "2026-09-12T17:14:09"
+    },
+    "88": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 217,
+      "density": 102.8,
+      "layer": "refined"
+    },
+    "89": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 581,
+      "density": 108.6,
+      "layer": "refined"
+    },
+    "90": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 303,
+      "density": 156.6,
+      "layer": "refined"
+    },
+    "91": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 435,
+      "density": 126.1,
+      "layer": "refined"
+    },
+    "92": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 684,
+      "density": 87.0,
+      "layer": "refined"
+    },
+    "93": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 474,
+      "density": 140.7,
+      "layer": "refined"
+    },
+    "94": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 296,
+      "density": 138.2,
+      "layer": "refined"
+    },
+    "95": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 775,
+      "density": 134.2,
+      "layer": "refined"
+    },
+    "96": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 461,
+      "density": 99.7,
+      "layer": "refined"
+    },
+    "97": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 445,
+      "density": 88.2,
+      "layer": "refined"
+    },
+    "98": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 186,
+      "density": 126.7,
+      "layer": "refined"
+    },
+    "99": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 333,
+      "density": 89.0,
+      "layer": "refined"
+    },
+    "100": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 194,
+      "density": 92.2,
+      "layer": "refined"
+    },
+    "101": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 320,
+      "density": 80.5,
+      "layer": "refined"
+    },
+    "102": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 381,
+      "density": 145.1,
+      "layer": "refined"
+    },
+    "103": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 431,
+      "density": 142.9,
+      "layer": "refined"
+    },
+    "104": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 231,
+      "density": 80.1,
+      "layer": "refined"
+    },
+    "105": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 888,
+      "density": 84.4,
+      "layer": "refined"
+    },
+    "106": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 552,
+      "density": 99.3,
+      "layer": "refined"
+    },
+    "107": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 747,
+      "density": 152.5,
+      "layer": "refined"
+    },
+    "108": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 259,
+      "density": 88.5,
+      "layer": "refined"
+    },
+    "109": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 381,
+      "density": 98.7,
+      "layer": "refined"
+    },
+    "110": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 1346,
+      "density": 120.8,
+      "layer": "refined"
+    },
+    "111": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 776,
+      "density": 108.1,
+      "layer": "refined"
+    },
+    "112": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 812,
+      "density": 125.9,
+      "layer": "refined"
+    },
+    "113": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 316,
+      "density": 101.4,
+      "layer": "refined"
+    },
+    "114": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 215,
+      "density": 125.2,
+      "layer": "refined"
+    },
+    "115": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 177,
+      "density": 117.7,
+      "layer": "refined"
+    },
+    "116": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 240,
+      "density": 139.0,
+      "layer": "refined"
+    },
+    "117": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "spans": 1141,
+      "density": 99.9,
+      "layer": "refined",
+      "validated_at": "2026-09-12T17:14:09"
+    },
+    "118": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "spans": 1318,
+      "density": 152.5,
+      "layer": "refined",
+      "validated_at": "2026-09-12T17:14:09"
+    },
+    "119": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 134,
+      "density": 104.2,
+      "layer": "refined"
+    },
+    "120": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 367,
+      "density": 115.5,
+      "layer": "refined"
+    },
+    "121": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 390,
+      "density": 93.1,
+      "layer": "refined"
+    },
+    "122": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 607,
+      "density": 81.5,
+      "layer": "refined"
+    },
+    "123": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 748,
+      "density": 112.0,
+      "layer": "refined"
+    },
+    "124": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 301,
+      "density": 118.6,
+      "layer": "refined"
+    },
+    "125": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 185,
+      "density": 145.2,
+      "layer": "refined"
+    },
+    "126": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 721,
+      "density": 117.6,
+      "layer": "refined"
+    },
+    "127": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "spans": 231,
+      "density": 86.2,
+      "layer": "refined",
+      "validated_at": "2026-09-12T17:14:09"
+    },
+    "128": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 896,
+      "density": 82.0,
+      "layer": "refined"
+    },
+    "129": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 770,
+      "density": 127.7,
+      "layer": "refined"
+    },
+    "130": {
+      "annotation": "opusone-v1",
+      "source": "opusone-v1",
+      "validated_at": "2026-09-12T17:14:09",
+      "spans": 848,
+      "density": 83.4,
+      "layer": "refined"
+    }
+  },
+  "generated_at": "2026-09-12T13:47:46"
+}
