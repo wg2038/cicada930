@@ -1,8 +1,17 @@
 # 一家言 (Cicada)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Android CI](https://github.com/wg2038/cicada930/actions/workflows/android.yml/badge.svg)](https://github.com/wg2038/cicada930/actions/workflows/android.yml)
+[![Python Corpus CI](https://github.com/wg2038/cicada930/actions/workflows/python.yml/badge.svg)](https://github.com/wg2038/cicada930/actions/workflows/python.yml)
+[![Web Edition](https://img.shields.io/badge/Web_Edition-Online_Reader-darkred.svg)](https://wg2038.github.io/cicada930-web/)
+
 > 究天人之际，通古今之变，成一家之言。—— 司马迁《报任安书》
 
 「一家言」是一款基于纯 Kotlin 与 Material Design 3 构建的《史记》数字人文研读与典籍精读 Android 应用程序。项目融合了现代移动交互设计与古典文献学排印美学，为研读太史公三千年通史提供多维度的数字探索工具。
+
+> 🌐 **免安装在线精读 Web 端已正式上线**：  
+> 欢迎直接访问基于 React + SQLite WASM 纯前端离线驱动的 Web 版：[https://wg2038.github.io/cicada930-web/](https://wg2038.github.io/cicada930-web/)  
+> Web 源码独立仓库：[wg2038/cicada930-web](https://github.com/wg2038/cicada930-web)
 
 ---
 
