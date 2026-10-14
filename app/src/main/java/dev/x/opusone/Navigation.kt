@@ -102,10 +102,15 @@ fun MainNavigation(
     val currentScreen = backStack.lastOrNull() ?: Screen.Home
 
     fun navigateTo(screen: Screen) {
-        // 目的地在栈顶时不再重复压栈，避免返回栈冗余增长
+        // 目的地在栈顶完全一致时不再重复压栈
         if (backStack.lastOrNull() == screen) return
         isBackNav = false
-        backStack = backStack + screen
+        // 跨模块跳转阅读器时若栈顶已是阅读器，采用 launchSingleTop 策略替换栈顶，避免返回栈反复堆积
+        if (screen is Screen.Reader && backStack.lastOrNull() is Screen.Reader) {
+            backStack = backStack.dropLast(1) + screen
+        } else {
+            backStack = backStack + screen
+        }
     }
 
     /**

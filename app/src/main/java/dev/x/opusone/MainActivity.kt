@@ -35,13 +35,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        lifecycleScope.launch {
-            launch(Dispatchers.IO) {
-                OpusOneDatabaseHelper.getInstance(applicationContext).prewarm()
-            }
-            launch {
-                ChineseConverter.initialize(applicationContext)
-            }
+        // 提前预热离线简繁字典与底本数据库
+        ChineseConverter.init(applicationContext)
+        lifecycleScope.launch(Dispatchers.IO) {
+            OpusOneDatabaseHelper.getInstance(applicationContext).prewarm()
         }
 
         val prefs = getSharedPreferences("opusone_prefs", Context.MODE_PRIVATE)

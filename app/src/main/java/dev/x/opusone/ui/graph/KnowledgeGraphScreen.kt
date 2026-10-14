@@ -342,10 +342,10 @@ private fun calculateFitTransform(
     val maxX = nodes.maxOf { it.x } + padRight
     val minY = nodes.minOf { it.y } - padTop
     val maxY = nodes.maxOf { it.y } + padBottom
-    val contentW = (maxX - minX).coerceAtLeast(100f)
-    val contentH = (maxY - minY).coerceAtLeast(100f)
+    val contentW = (maxX - minX).coerceAtLeast(1e-4f)
+    val contentH = (maxY - minY).coerceAtLeast(1e-4f)
 
-    val scale = (minOf(viewportWidth / contentW, viewportHeight / contentH) * 0.90f).coerceIn(0.2f, 4.5f)
+    val scale = (minOf(viewportWidth / contentW, viewportHeight / contentH) * 0.90f).coerceIn(0.3f, 4.0f)
     val centerX = (minX + maxX) / 2f
     val centerY = (minY + maxY) / 2f
     val offX = viewportWidth / 2f - centerX * scale
@@ -529,9 +529,8 @@ fun KnowledgeGraphScreen(
                     }
                     .pointerInput(Unit) {
                         detectTransformGestures { centroid, pan, zoom, _ ->
-                            // 缩放围绕手势中心（centroid）锚定，最小缩放限制为初始全貌适配比例（只能放大，不能再缩小）
-                            val newScale = (scale * zoom).coerceIn(minScale, 6.0f)
-                            if (scale > 0f) {
+                            val newScale = (scale * zoom).coerceIn(0.3f, 4.0f)
+                            if (scale > 1e-4f) {
                                 val worldX = (centroid.x - offset.x) / scale
                                 val worldY = (centroid.y - offset.y) / scale
                                 offset = centroid - Offset(worldX, worldY) * newScale + pan
@@ -631,6 +630,7 @@ fun KnowledgeGraphScreen(
 
                             val dx = toNode.x - fromNode.x
                             val dy = toNode.y - fromNode.y
+                            if (kotlin.math.hypot(dx, dy) < 1e-4f) continue
 
                             val startX: Float
                             val startY: Float

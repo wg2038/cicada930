@@ -123,17 +123,17 @@ class EntityWikiViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun onSearchQueryChange(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
+        _uiState.update { it.copy(searchQuery = query, isLoading = query.isNotBlank()) }
+        // 显式 cancel() 上一个查询 Job 与分类加载 Job，彻底消除协程竞态与旧结果覆盖问题
         searchJob?.cancel()
-        // 在途的分类加载若后完成会覆盖搜索结果，一并发起搜索时取消
         listJob?.cancel()
         if (query.isNotBlank()) {
             searchJob = viewModelScope.launch {
+                delay(250L) // 防抖 250ms
                 guardCoroutine("EntityWikiViewModel", "search", onError = {
                     _uiState.update { it.copy(isLoading = false) }
                 }) {
-                    delay(200) // 防抖：避免每敲一字都发起查询，旧结果覆盖新查询
-                    val matches = repository.searchEntities(query, limit = 50)
+                    val matches = repository.searchEntities(query.trim(), limit = 50)
                     val mapped = matches.map { match ->
                         EntityItem(
                             id = match.entityId,
@@ -150,8 +150,7 @@ class EntityWikiViewModel(application: Application) : AndroidViewModel(applicati
                 }
             }
         } else {
-            // 清空输入框 → 回到分类列表。直接调用 loadEntities（其内部自带 Job 跟踪），
-            // 不再嵌套一层 launch：嵌套的 launch 不受 searchJob 取消控制，取消拦不住它写回。
+            // 清空输入框 → 回到分类列表
             loadEntities(_uiState.value.selectedCategory)
         }
     }

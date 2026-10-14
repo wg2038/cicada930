@@ -85,6 +85,7 @@ for _stale in (TMP_DB, TMP_DB + "-journal", TMP_DB + "-wal", TMP_DB + "-shm"):
         os.remove(_stale)
 con = sqlite3.connect(TMP_DB)
 cur = con.cursor()
+cur.execute("PRAGMA foreign_keys = ON;")
 cur.executescript("""
 CREATE TABLE chapters (id INTEGER PRIMARY KEY, category TEXT NOT NULL, title TEXT NOT NULL,
     summary TEXT, word_count INTEGER NOT NULL, section_count INTEGER NOT NULL);

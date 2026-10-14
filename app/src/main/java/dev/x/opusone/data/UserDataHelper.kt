@@ -15,7 +15,7 @@ class UserDataHelper private constructor(private val context: Context) :
 
     companion object {
         private const val DB_NAME = "user_data.db"
-        private const val DB_VERSION = 1
+        private const val DB_VERSION = 2
 
         @SuppressLint("StaticFieldLeak")
         @Volatile
@@ -42,10 +42,31 @@ class UserDataHelper private constructor(private val context: Context) :
             )
             """.trimIndent()
         )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS reading_history (
+                chapter_id INTEGER PRIMARY KEY,
+                chapter_title TEXT NOT NULL,
+                pn_index TEXT NOT NULL,
+                updated_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // 目前仅 v1，未来版本在此做 ALTER 迁移
+        if (oldVersion < 2) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS reading_history (
+                    chapter_id INTEGER PRIMARY KEY,
+                    chapter_title TEXT NOT NULL,
+                    pn_index TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+        }
     }
 
     /**
@@ -180,5 +201,27 @@ class UserDataHelper private constructor(private val context: Context) :
 
     fun deleteBookmarksForChapter(chapterId: Int): Int {
         return writableDatabase.delete("bookmarks", "chapter_id = ?", arrayOf(chapterId.toString()))
+    }
+
+    fun recordReadingHistory(chapterId: Int, chapterTitle: String, pnIndex: String) {
+        val values = ContentValues().apply {
+            put("chapter_id", chapterId)
+            put("chapter_title", chapterTitle)
+            put("pn_index", pnIndex)
+            put("updated_at", System.currentTimeMillis())
+        }
+        writableDatabase.insertWithOnConflict("reading_history", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun getReadingHistory(chapterId: Int): Pair<String, Long>? {
+        writableDatabase.rawQuery(
+            "SELECT pn_index, updated_at FROM reading_history WHERE chapter_id = ?",
+            arrayOf(chapterId.toString())
+        ).use { cursor ->
+            if (cursor.moveToFirst()) {
+                return Pair(cursor.getString(0) ?: "", cursor.getLong(1))
+            }
+        }
+        return null
     }
 }

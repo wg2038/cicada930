@@ -54,6 +54,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
     private var loadJob: Job? = null
     private var bookmarkJob: Job? = null
     private var entityJob: Job? = null
+    private var historyJob: Job? = null
 
     @Volatile
     private var currentLoadChapterId: Int = -1
@@ -287,6 +288,25 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                     Toast.makeText(getApplication(), toastMsg, Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+    /** 记录阅读历史进度，增加 500ms 防抖避免快速滚动引发磁盘 IO 争用 */
+    fun recordProgress(chapterId: Int, chapterTitle: String, pnIndex: String) {
+        if (pnIndex.isBlank()) return
+        historyJob?.cancel()
+        historyJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(500L)
+            repository.recordReadingHistory(chapterId, chapterTitle, pnIndex)
+        }
+    }
+
+    /** 退出或切页时立即写入当前阅读进度 */
+    fun flushProgress(chapterId: Int, chapterTitle: String, pnIndex: String) {
+        if (pnIndex.isBlank()) return
+        historyJob?.cancel()
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.recordReadingHistory(chapterId, chapterTitle, pnIndex)
         }
     }
 

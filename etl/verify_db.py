@@ -110,20 +110,20 @@ def main() -> None:
     assert bad_alias == 0, f"{bad_alias} 条 entities.aliases 含非字符串元素或非法 JSON"
     print("  entities.aliases 均为字符串数组")
 
-    # Verify database schema version matches OpusOneDatabaseHelper.DB_VERSION
+    # Verify database schema version matches OpusOneDatabaseHelper.ASSET_DB_VERSION
     kotlin = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "..", "app", "src", "main", "java", "dev", "x", "opusone",
         "data", "OpusOneDatabaseHelper.kt",
     )
-    m = re.search(r"const\s+val\s+DB_VERSION\s*=\s*(\d+)", open(kotlin, encoding="utf-8").read())
-    assert m, "未能从 OpusOneDatabaseHelper.kt 解析出 DB_VERSION"
+    m = re.search(r"const\s+val\s+ASSET_DB_VERSION\s*=\s*(\d+)", open(kotlin, encoding="utf-8").read())
+    assert m, "未能从 OpusOneDatabaseHelper.kt 解析出 ASSET_DB_VERSION"
     expected = int(m.group(1))
     actual = c.execute("PRAGMA user_version").fetchone()[0]
     assert actual == expected, (
-        f"库内 user_version={actual} 与客户端 DB_VERSION={expected} 不一致"
+        f"库内 user_version={actual} 与客户端 ASSET_DB_VERSION={expected} 不一致"
     )
-    print(f"  user_version = {actual}（与客户端 DB_VERSION 一致）")
+    print(f"  user_version = {actual}（与客户端 ASSET_DB_VERSION 一致）")
 
     conn.close()
     print(f"[{label}] DB 产物校验通过。")

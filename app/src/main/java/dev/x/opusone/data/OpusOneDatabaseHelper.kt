@@ -27,7 +27,8 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
          * 否则已装过 App 的设备 prefs 里记着旧版本号、判定「无需替换」，
          * 会继续用旧库 —— 测试时会表现为「修好的表还是坏的」，且不报任何错。
          */
-        private const val DB_VERSION = 13
+        const val ASSET_DB_VERSION = 13
+        private const val DB_VERSION = ASSET_DB_VERSION
         private const val PREF_KEY_DB_VERSION = "opusone_db_version"
         private const val TAG = "OpusOneDatabaseHelper"
 
@@ -60,85 +61,98 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
     @Volatile
     private var copyChecked = false
 
+    @Synchronized
     private fun ensureDatabaseCopied() {
         if (copyChecked) return
-        synchronized(this) {
-            if (copyChecked) return
-            val dbFile = context.getDatabasePath(DB_NAME)
-            val prefs = context.getSharedPreferences("opusone_db_prefs", Context.MODE_PRIVATE)
-            val currentInstalledVersion = prefs.getInt(PREF_KEY_DB_VERSION, 0)
+        val dbFile = context.getDatabasePath(DB_NAME)
+        val prefs = context.getSharedPreferences("opusone_db_prefs", Context.MODE_PRIVATE)
+        val currentInstalledVersion = prefs.getInt(PREF_KEY_DB_VERSION, 0)
 
-            if (!dbFile.exists() || currentInstalledVersion < DB_VERSION) {
-                // 版本升级需要替换文件，先释放缓存的只读句柄，否则句柄占用会让替换失败
-                releaseReadonlyDb()
-                dbFile.parentFile?.mkdirs()
-                if (dbFile.exists()) {
-                    // 升级前先从旧库迁移用户书签到 user_data.db，避免覆盖导致用户数据丢失
-                    val migrated = try {
-                        UserDataHelper.getInstance(context).migrateFromLegacyIfNeeded()
-                    } catch (e: Exception) {
-                        Log.w(TAG, "legacy bookmark migration failed before re-copy", e)
-                        false
-                    }
-                    if (!migrated) {
-                        Log.w(TAG, "skip db re-copy: legacy bookmark migration failed, keeping old db for retry")
-                        return
-                    }
-                }
-
-                val tempFile = File(dbFile.parentFile, "$DB_NAME.tmp")
-                if (tempFile.exists()) tempFile.delete()
-
-                val copySuccess = try {
-                    context.assets.open(DB_NAME).use { input ->
-                        FileOutputStream(tempFile).use { output ->
-                            val buffer = ByteArray(128 * 1024)
-                            var bytes: Int
-                            while (input.read(buffer).also { bytes = it } >= 0) {
-                                output.write(buffer, 0, bytes)
-                            }
-                            output.flush()
-                        }
-                    }
-                    tempFile.exists() && tempFile.length() > 0
+        if (!dbFile.exists() || currentInstalledVersion < DB_VERSION) {
+            // 版本升级需要替换文件，先释放缓存的只读句柄，否则句柄占用会让替换失败
+            releaseReadonlyDb()
+            dbFile.parentFile?.mkdirs()
+            if (dbFile.exists()) {
+                // 升级前先从旧库迁移用户书签到 user_data.db，避免覆盖导致用户数据丢失
+                val migrated = try {
+                    UserDataHelper.getInstance(context).migrateFromLegacyIfNeeded()
                 } catch (e: Exception) {
-                    Log.e(TAG, "failed to copy db from assets to temp file", e)
-                    if (tempFile.exists()) tempFile.delete()
+                    Log.w(TAG, "legacy bookmark migration failed before re-copy", e)
                     false
                 }
-
-                if (!copySuccess) {
-                    Log.e(TAG, "db copy aborted due to asset copy failure, keeping existing db if any")
-                    return
-                }
-
-                // 确认新文件写入成功后，再清理旧数据库及 WAL/shm 临时文件
-                if (dbFile.exists()) {
-                    deleteDatabaseFiles(dbFile)
-                }
-
-                val replaced = if (tempFile.renameTo(dbFile)) {
-                    true
-                } else {
-                    try {
-                        tempFile.copyTo(dbFile, overwrite = true)
-                        tempFile.delete()
-                        true
-                    } catch (e: Exception) {
-                        Log.e(TAG, "failed to move temp db to destination dbFile", e)
-                        false
-                    }
-                }
-
-                if (replaced) {
-                    prefs.edit().putInt(PREF_KEY_DB_VERSION, DB_VERSION).apply()
-                    cachedChapters = null
-                } else {
-                    Log.e(TAG, "failed to replace dbFile with new database")
+                if (!migrated) {
+                    Log.w(TAG, "skip db re-copy: legacy bookmark migration failed, keeping old db for retry")
                     return
                 }
             }
-            copyChecked = true
+
+            val tempFile = File(dbFile.parentFile, "$DB_NAME.tmp")
+            if (tempFile.exists()) tempFile.delete()
+
+            val copySuccess = try {
+                context.assets.open(DB_NAME).use { input ->
+                    FileOutputStream(tempFile).use { output ->
+                        val buffer = ByteArray(128 * 1024)
+                        var bytes: Int
+                        while (input.read(buffer).also { bytes = it } >= 0) {
+                            output.write(buffer, 0, bytes)
+                        }
+                        output.flush()
+                        output.fd.sync()
+                    }
+                }
+                isValidSqliteFile(tempFile)
+            } catch (e: Exception) {
+                Log.e(TAG, "failed to copy db from assets to temp file", e)
+                if (tempFile.exists()) tempFile.delete()
+                false
+            }
+
+            if (!copySuccess) {
+                Log.e(TAG, "db copy aborted due to asset copy failure or corrupt sqlite header, keeping existing db if any")
+                if (tempFile.exists()) tempFile.delete()
+                return
+            }
+
+            // 确认新文件写入成功后，再清理旧数据库及 WAL/shm 临时文件
+            if (dbFile.exists()) {
+                deleteDatabaseFiles(dbFile)
+            }
+
+            val replaced = if (tempFile.renameTo(dbFile)) {
+                true
+            } else {
+                try {
+                    tempFile.copyTo(dbFile, overwrite = true)
+                    tempFile.delete()
+                    true
+                } catch (e: Exception) {
+                    Log.e(TAG, "failed to move temp db to destination dbFile", e)
+                    false
+                }
+            }
+
+            if (replaced) {
+                prefs.edit().putInt(PREF_KEY_DB_VERSION, DB_VERSION).apply()
+                cachedChapters = null
+            } else {
+                Log.e(TAG, "failed to replace dbFile with new database")
+                return
+            }
+        }
+        copyChecked = true
+    }
+
+    private fun isValidSqliteFile(file: File): Boolean {
+        if (!file.exists() || file.length() < 16) return false
+        return try {
+            java.io.FileInputStream(file).use { input ->
+                val header = ByteArray(16)
+                val read = input.read(header)
+                read == 16 && header.contentEquals("SQLite format 3\u0000".toByteArray(Charsets.US_ASCII))
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 
@@ -339,7 +353,7 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
         val db = getReadableDb()
         var item: EntityItem? = null
 
-        val exactAliasPattern = "%\"" + entityId.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "\"%"
+        val exactAliasPattern = "%\"" + escapeLikeParam(entityId) + "\"%"
         db.rawQuery(
             """
             SELECT id, label, type, type_name_zh, aliases, description, tags, occurrences_count
@@ -587,7 +601,13 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
 
     fun deleteBookmarksForChapter(chapterId: Int): Int = userDataHelper().deleteBookmarksForChapter(chapterId)
 
-    /** 用户数据独立库（书签），首次访问时执行旧库一次性迁移。 */
+    fun recordReadingHistory(chapterId: Int, chapterTitle: String, pnIndex: String) =
+        userDataHelper().recordReadingHistory(chapterId, chapterTitle, pnIndex)
+
+    fun getReadingHistory(chapterId: Int): Pair<String, Long>? =
+        userDataHelper().getReadingHistory(chapterId)
+
+    /** 用户数据独立库（书签与阅读历史），首次访问时执行旧库一次性迁移。 */
     @Volatile
     private var userDataMigrated = false
 
@@ -633,8 +653,21 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
         return block(db)
     }
 
+    /** 转义 LIKE 查询中的 SQLite 通配符 %, _, \ */
+    fun escapeLikeParam(field: String): String =
+        field.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+    /** 对 FTS 查询关键词过滤特殊字符并以双引号安全包裹，防止 SQLite 语法报错 */
+    fun sanitizeFtsQuery(query: String): String {
+        val clean = query.replace(Regex("[\"\'*^:()+\\-~]"), " ").trim()
+        if (clean.isBlank()) return "\"\""
+        return clean.split(Regex("\\s+"))
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { "\"${it.replace("\"", "\"\"")}\"" }
+    }
+
     private fun likeArg(field: String): String =
-        "%" + field.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        "%" + escapeLikeParam(field) + "%"
 
     private val LIKE_ESCAPE = " ESCAPE '\\' "
 

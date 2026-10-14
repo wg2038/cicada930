@@ -1,6 +1,7 @@
 package dev.x.opusone.theme
 
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.neverEqualPolicy
 
 /**
  * 全局汉字正字法模式（简体中文 / 繁體中文）。
@@ -27,4 +28,4 @@ enum class ChineseScriptMode {
         }
 }
 
-val LocalChineseScript = compositionLocalOf { ChineseScriptMode.SIMPLIFIED }
+val LocalChineseScript = compositionLocalOf(neverEqualPolicy()) { ChineseScriptMode.SIMPLIFIED }

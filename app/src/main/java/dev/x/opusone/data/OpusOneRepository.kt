@@ -81,4 +81,12 @@ class OpusOneRepository(context: Context) {
     suspend fun searchEntities(query: String, limit: Int = 50): List<SearchResultItem.EntityMatch> = withContext(Dispatchers.IO) {
         dbHelper.searchEntities(query.trim(), limit)
     }
+
+    suspend fun recordReadingHistory(chapterId: Int, chapterTitle: String, pnIndex: String) = withContext(Dispatchers.IO) {
+        dbHelper.recordReadingHistory(chapterId, chapterTitle, pnIndex)
+    }
+
+    suspend fun getReadingHistory(chapterId: Int): Pair<String, Long>? = withContext(Dispatchers.IO) {
+        dbHelper.getReadingHistory(chapterId)
+    }
 }

@@ -78,49 +78,14 @@ object OpusOneTagParser {
                 val isEnabled = syntaxHighlightEnabled && enabledTags.contains(tagType)
 
                 if (isEnabled && displayText.isNotBlank()) {
-                    val start = length
+                    val rawStart = length
                     append(displayText)
-                    val end = length
+                    val rawEnd = length
 
-                    addStringAnnotation(
-                        tag = "ENTITY_CLICK",
-                        annotation = entityKey,
-                        start = start,
-                        end = end
-                    )
+                    val start = rawStart.coerceIn(0, length)
+                    val end = rawEnd.coerceIn(0, length)
 
-                    if (onEntityClick != null) {
-                        addLink(
-                            clickable = LinkAnnotation.Clickable(
-                                tag = entityKey,
-                                styles = TextLinkStyles(),
-                                linkInteractionListener = { link ->
-                                    val key = (link as? LinkAnnotation.Clickable)?.tag ?: entityKey
-                                    onEntityClick(key)
-                                }
-                            ),
-                            start = start,
-                            end = end
-                        )
-                    }
-
-                    if (isVerbTag(tagType)) {
-                        addStringAnnotation(
-                            tag = "VERB_BG",
-                            annotation = tagType.name,
-                            start = start,
-                            end = end
-                        )
-                    }
-
-                    val style = getTagStyle(tagType, isDark)
-                    addStyle(style = style, start = start, end = end)
-                } else {
-                    val start = length
-                    append(displayText)
-                    val end = length
-
-                    if (displayText.isNotBlank()) {
+                    if (start < end) {
                         addStringAnnotation(
                             tag = "ENTITY_CLICK",
                             annotation = entityKey,
@@ -131,16 +96,60 @@ object OpusOneTagParser {
                         if (onEntityClick != null) {
                             addLink(
                                 clickable = LinkAnnotation.Clickable(
-                                tag = entityKey,
-                                styles = TextLinkStyles(),
-                                linkInteractionListener = { link ->
-                                    val key = (link as? LinkAnnotation.Clickable)?.tag ?: entityKey
-                                    onEntityClick(key)
-                                }
-                            ),
+                                    tag = entityKey,
+                                    styles = TextLinkStyles(),
+                                    linkInteractionListener = { link ->
+                                        val key = (link as? LinkAnnotation.Clickable)?.tag ?: entityKey
+                                        onEntityClick(key)
+                                    }
+                                ),
+                                start = start,
+                                end = end
+                            )
+                        }
+
+                        if (isVerbTag(tagType)) {
+                            addStringAnnotation(
+                                tag = "VERB_BG",
+                                annotation = tagType.name,
+                                start = start,
+                                end = end
+                            )
+                        }
+
+                        val style = getTagStyle(tagType, isDark)
+                        addStyle(style = style, start = start, end = end)
+                    }
+                } else {
+                    val rawStart = length
+                    append(displayText)
+                    val rawEnd = length
+
+                    val start = rawStart.coerceIn(0, length)
+                    val end = rawEnd.coerceIn(0, length)
+
+                    if (displayText.isNotBlank() && start < end) {
+                        addStringAnnotation(
+                            tag = "ENTITY_CLICK",
+                            annotation = entityKey,
                             start = start,
                             end = end
                         )
+
+                        if (onEntityClick != null) {
+                            addLink(
+                                clickable = LinkAnnotation.Clickable(
+                                    tag = entityKey,
+                                    styles = TextLinkStyles(),
+                                    linkInteractionListener = { link ->
+                                        val key = (link as? LinkAnnotation.Clickable)?.tag ?: entityKey
+                                        onEntityClick(key)
+                                    }
+                                ),
+                                start = start,
+                                end = end
+                            )
+                        }
                     }
                 }
             }
@@ -149,7 +158,7 @@ object OpusOneTagParser {
         }
 
         if (lastIndex < normalizedText.length) {
-            val remaining = normalizedText.substring(lastIndex)
+            val remaining = normalizedText.substring(lastIndex.coerceIn(0, normalizedText.length))
             append(cleanDelimiters(remaining).toScript(scriptMode))
         }
     }

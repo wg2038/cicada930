@@ -13,7 +13,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 /** 词典加载处于 LOADING 状态超过该时长即视为卡死，允许重新发起加载。 */
-private const val LOAD_STUCK_TIMEOUT_MS = 30_000L
+private const val LOAD_STUCK_TIMEOUT_MS = 5_000L
 
 object ChineseConverter {
 

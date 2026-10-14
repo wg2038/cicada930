@@ -55,6 +55,27 @@ def main() -> None:
 
     print("All sections passed OAM, entity-key and quote validation!")
 
+    chapters = corpus.load_table("chapters")
+    chapter_ids = {c["id"] for c in chapters}
+    section_pns = {(s["chapter_id"], s["pn"]) for s in sections}
+
+    # Verify sanjiazhu foreign keys and section anchoring
+    sanjiazhu = corpus.load_table("sanjiazhu")
+    print(f"Validating {len(sanjiazhu)} sanjiazhu notes references...")
+    bad_sjz_ch = [n for n in sanjiazhu if n["chapter_id"] not in chapter_ids]
+    assert not bad_sjz_ch, f"Found {len(bad_sjz_ch)} orphan sanjiazhu notes (invalid chapter_id)"
+
+    bad_sjz_sec = [n for n in sanjiazhu if n.get("sentence_id") and (n["chapter_id"], n["sentence_id"]) not in section_pns]
+    assert not bad_sjz_sec, f"Found {len(bad_sjz_sec)} sanjiazhu notes with invalid sentence_id"
+
+    # Verify occurrences foreign keys
+    occurrences = corpus.load_table("occurrences")
+    print(f"Validating {len(occurrences)} entity occurrences references...")
+    bad_occ_ch = [o for o in occurrences if o["chapter_id"] not in chapter_ids]
+    assert not bad_occ_ch, f"Found {len(bad_occ_ch)} orphan entity occurrences (invalid chapter_id)"
+
+    print("All sanjiazhu and occurrences passed foreign key and anchor integrity verification!")
+
 
 if __name__ == "__main__":
     main()

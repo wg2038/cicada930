@@ -105,17 +105,41 @@ fun ReaderScreen(
         viewModel.loadChapter(chapterId, targetSectionPn)
     }
 
-    // 用 rememberSaveable 保证只滚动一次（切换设置重载 sections 时不再跳回）
-    var hasScrolledToTarget by rememberSaveable(chapterId, targetSectionPn) { mutableStateOf(false) }
-    LaunchedEffect(uiState.sections, targetSectionPn) {
-        if (!hasScrolledToTarget && !targetSectionPn.isNullOrBlank() && uiState.sections.isNotEmpty()) {
+    // 跨模块或卷段变更时准确定位目标段落
+    LaunchedEffect(chapterId, targetSectionPn, uiState.sections) {
+        if (!targetSectionPn.isNullOrBlank() && uiState.sections.isNotEmpty()) {
             val normalizedTarget = normalizePnIndex(targetSectionPn)
             val targetIdx = uiState.sections.indexOfFirst {
                 it.pnIndex == targetSectionPn || normalizePnIndex(it.pnIndex) == normalizedTarget
             }
             if (targetIdx >= 0) {
                 listState.scrollToItem(targetIdx + 1) // +1 为顶部篇章卡
-                hasScrolledToTarget = true
+            }
+        }
+    }
+
+    // 监听阅读滚动并通过 ViewModel 进行 500ms 防抖写入
+    LaunchedEffect(listState.firstVisibleItemIndex, uiState.sections) {
+        val idx = (listState.firstVisibleItemIndex - 1).coerceAtLeast(0)
+        if (idx < uiState.sections.size) {
+            val currentSec = uiState.sections[idx]
+            val chap = uiState.chapter
+            if (chap != null && currentSec.pnIndex.isNotBlank()) {
+                viewModel.recordProgress(chap.id, chap.title, currentSec.pnIndex)
+            }
+        }
+    }
+
+    // 页面退出 onDispose 时立即写入当前阅读进度
+    DisposableEffect(chapterId) {
+        onDispose {
+            val idx = (listState.firstVisibleItemIndex - 1).coerceAtLeast(0)
+            if (idx < uiState.sections.size) {
+                val currentSec = uiState.sections[idx]
+                val chap = uiState.chapter
+                if (chap != null && currentSec.pnIndex.isNotBlank()) {
+                    viewModel.flushProgress(chap.id, chap.title, currentSec.pnIndex)
+                }
             }
         }
     }
@@ -453,11 +477,16 @@ private fun SectionItemRow(
             }
 
             val verbAnnotations = remember(parsedAnnotatedText) {
-                parsedAnnotatedText.getStringAnnotations(
-                    tag = "VERB_BG",
-                    start = 0,
-                    end = parsedAnnotatedText.text.length
-                )
+                val textLen = parsedAnnotatedText.text.length
+                if (textLen == 0) {
+                    emptyList()
+                } else {
+                    parsedAnnotatedText.getStringAnnotations(
+                        tag = "VERB_BG",
+                        start = 0,
+                        end = textLen
+                    )
+                }
             }
             val density = LocalDensity.current
             val fontSizePx = with(density) { fontSize.sp.toPx() }
@@ -510,14 +539,14 @@ private fun SectionItemRow(
                             highlightSpans = emptyList()
                         } else {
                             val spans = mutableListOf<VerbHighlightSpan>()
+                            val textLength = layout.layoutInput.text.length
                             for (annotation in verbAnnotations) {
                                 val tagType = TagType.entries.find { it.name == annotation.item } ?: continue
                                 val bgColor = OpusOneTagParser.getVerbBackgroundColor(tagType, isDark) ?: continue
-                                val start = annotation.start
-                                val end = annotation.end
-                                val textLength = layout.layoutInput.text.length
-                                if (start >= end || start >= textLength) continue
-                                val safeEnd = minOf(end, textLength)
+                                val start = annotation.start.coerceIn(0, textLength)
+                                val end = annotation.end.coerceIn(0, textLength)
+                                if (start >= end) continue
+                                val safeEnd = end
 
                                 val startLine = layout.getLineForOffset(start)
                                 val endLine = layout.getLineForOffset((safeEnd - 1).coerceAtLeast(start))
