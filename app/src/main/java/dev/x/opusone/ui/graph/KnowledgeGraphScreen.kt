@@ -630,7 +630,7 @@ fun KnowledgeGraphScreen(
 
                             val dx = toNode.x - fromNode.x
                             val dy = toNode.y - fromNode.y
-                            if (kotlin.math.hypot(dx, dy) < 1e-4f) continue
+                            if (kotlin.math.hypot(dx, dy) < 1e-4f) return@forEach
 
                             val startX: Float
                             val startY: Float
