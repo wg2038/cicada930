@@ -152,17 +152,16 @@ object OpusOneTagParser {
                         }
                     }
                 }
+
+                lastIndex = match.range.last + 1
             }
 
-            lastIndex = match.range.last + 1
-        }
-
-        if (lastIndex < normalizedText.length) {
-            val remaining = normalizedText.substring(lastIndex.coerceIn(0, normalizedText.length))
-            append(cleanDelimiters(remaining).toScript(scriptMode))
+            if (lastIndex < normalizedText.length) {
+                val remaining = normalizedText.substring(lastIndex.coerceIn(0, normalizedText.length))
+                append(cleanDelimiters(remaining).toScript(scriptMode))
+            }
         }
     }
-}
 
     // OAM 当前语法 + 旧版括号语法（后者仅作历史语料容错，规范上已废弃）
     private val OAM_TAG_REGEX = Regex("⟪(?:(?:[A-Za-z]{2}|[\\u4e00-\\u9fa5])[\\s\\u3000]?)?([^⟪⟫]+?)⟫")
