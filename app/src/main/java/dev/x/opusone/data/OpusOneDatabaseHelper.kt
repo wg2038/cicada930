@@ -27,7 +27,7 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
          * 否则已装过 App 的设备 prefs 里记着旧版本号、判定「无需替换」，
          * 会继续用旧库 —— 测试时会表现为「修好的表还是坏的」，且不报任何错。
          */
-        const val ASSET_DB_VERSION = 13
+        const val ASSET_DB_VERSION = 14
         private const val DB_VERSION = ASSET_DB_VERSION
         private const val PREF_KEY_DB_VERSION = "opusone_db_version"
         private const val TAG = "OpusOneDatabaseHelper"

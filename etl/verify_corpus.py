@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Validates OpusOne corpus: OAM grammar, plain text identity, quotes, and registered entity keys."""
+import collections
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -68,13 +70,60 @@ def main() -> None:
     bad_sjz_sec = [n for n in sanjiazhu if n.get("sentence_id") and (n["chapter_id"], n["sentence_id"]) not in section_pns]
     assert not bad_sjz_sec, f"Found {len(bad_sjz_sec)} sanjiazhu notes with invalid sentence_id"
 
-    # Verify occurrences foreign keys
+    # Verify occurrences foreign keys, section anchors, uniqueness and counts
     occurrences = corpus.load_table("occurrences")
     print(f"Validating {len(occurrences)} entity occurrences references...")
     bad_occ_ch = [o for o in occurrences if o["chapter_id"] not in chapter_ids]
     assert not bad_occ_ch, f"Found {len(bad_occ_ch)} orphan entity occurrences (invalid chapter_id)"
 
+    entity_ids = {e["id"] for e in entities}
+    bad_occ_entity = [o for o in occurrences if o["entity_id"] not in entity_ids]
+    assert not bad_occ_entity, f"Found {len(bad_occ_entity)} orphan entity occurrences (invalid entity_id)"
+
+    bad_occ_sec = [
+        o for o in occurrences
+        if (o["chapter_id"], o["section_pn"]) not in section_pns
+    ]
+    assert not bad_occ_sec, f"Found {len(bad_occ_sec)} occurrences with a stale section anchor"
+
+    triples = [(o["entity_id"], o["chapter_id"], o["section_pn"]) for o in occurrences]
+    duplicate_count = len(triples) - len(set(triples))
+    assert duplicate_count == 0, f"Found {duplicate_count} duplicate occurrence triples"
+
+    expected_counts = collections.Counter(o["entity_id"] for o in occurrences)
+    bad_counts = [
+        e["id"] for e in entities
+        if int(e.get("occurrences_count") or 0) != expected_counts.get(e["id"], 0)
+    ]
+    assert not bad_counts, f"Found {len(bad_counts)} entities whose occurrences_count is stale"
+
+    # Entity hygiene: redirect rows and punctuation-only label duplicates
+    redirects = [
+        e["id"] for e in entities
+        if str(e.get("type", "")).upper() == "REDIRECT"
+        or (e.get("description") or "").startswith("REDIRECT ")
+    ]
+    assert not redirects, f"Found {len(redirects)} unresolved redirect entities"
+
+    label_noise = re.compile(
+        r"[\s“”\"‘’'「」『』《》〈〉\[\]【】（）()—\-–·:：,，.。、;！!?？]"
+    )
+    label_groups = collections.defaultdict(list)
+    for e in entities:
+        normalized = label_noise.sub("", e.get("label") or "")
+        if normalized:
+            label_groups[normalized].append(e["id"])
+    near_duplicates = {k: v for k, v in label_groups.items() if len(v) > 1}
+    assert not near_duplicates, f"Found {len(near_duplicates)} near-duplicate label groups"
+
+    assert len(entities) >= 20000, f"Entity table shrank to {len(entities)} rows"
+
     print("All sanjiazhu and occurrences passed foreign key and anchor integrity verification!")
+    print(
+        f"Occurrence checks: {len(occurrences)} unique anchors, "
+        f"{len(expected_counts)} entities linked, 0 duplicates, 0 stale counts."
+    )
+    print(f"Entity hygiene: {len(entities)} entities, 0 redirects, 0 near-duplicate labels.")
 
 
 if __name__ == "__main__":

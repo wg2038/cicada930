@@ -52,6 +52,21 @@ jobs:
         run: |
           python etl/verify_corpus.py
 
+      - name: Verify Repair Invariants
+        run: |
+          python etl/restore_text.py --check
+          python etl/cleanup_entities.py --phase structure --check
+          python etl/cleanup_entities.py --phase derived --check
+          python etl/rebuild_occurrences.py --check
+
+      - name: Verify Ten Tables
+        run: |
+          python etl/verify_tables.py
+
+      - name: Verify UI Contract
+        run: |
+          python etl/verify_ui_contract.py --corpus
+
       - name: Verify Committed Assets Database
         run: |
           python etl/verify_db.py app/src/main/assets/opusone.db --committed
@@ -60,3 +75,7 @@ jobs:
         run: |
           python etl/build_from_corpus.py /tmp/test_opusone.db
           python etl/verify_db.py /tmp/test_opusone.db
+
+      - name: Verify Committed DB Freshness
+        run: |
+          python etl/verify_db_freshness.py

@@ -21,6 +21,12 @@ MIN_COUNTS = {
     "sanjiazhu_notes": 14490,
 }
 
+# Entity categories rendered as tabs by EntityWikiScreen.kt (excluding "全部").
+UI_ENTITY_TYPES = [
+    "person", "place", "official", "state", "event",
+    "identity", "artifact", "concept", "biology", "astronomy",
+]
+
 EXPECTED_INDEXES = {
     "idx_sections_ch_order",
     "idx_occurrences_entity",
@@ -67,8 +73,60 @@ def main() -> None:
         print(f"  {table:20} = {n}")
         assert n >= minimum, f"{table} 行数 {n} 少于下限 {minimum}"
 
-    redirect_n = c.execute("SELECT count(*) FROM entities WHERE type = 'redirect'").fetchone()[0]
+    redirect_n = c.execute(
+        "SELECT count(*) FROM entities "
+        "WHERE lower(type) = 'redirect' OR description LIKE 'REDIRECT %'"
+    ).fetchone()[0]
     assert redirect_n == 0, f"entities 表仍残留 {redirect_n} 条重定向占位条目"
+
+    # Every UI tab must have at least one entity, otherwise the tab is empty.
+    print("-- UI 实体分类 --")
+    for entity_type in UI_ENTITY_TYPES:
+        n = c.execute(
+            "SELECT count(*) FROM entities WHERE type = ?", (entity_type,)
+        ).fetchone()[0]
+        print(f"  {entity_type:12} = {n}")
+        assert n > 0, f"UI 分类 {entity_type} 没有实体，标签页会为空"
+
+    # Occurrence anchors must join sections and match the derived counts.
+    print("-- occurrence 锚点 --")
+    stale_anchors = c.execute(
+        "SELECT count(*) FROM entity_occurrences o "
+        "LEFT JOIN sections s ON s.chapter_id = o.chapter_id AND s.pn_index = o.section_pn "
+        "WHERE s.id IS NULL"
+    ).fetchone()[0]
+    assert stale_anchors == 0, f"{stale_anchors} 条 occurrence 无法命中 sections.pn_index"
+
+    missing_entities = c.execute(
+        "SELECT count(*) FROM entity_occurrences o "
+        "LEFT JOIN entities e ON e.id = o.entity_id WHERE e.id IS NULL"
+    ).fetchone()[0]
+    assert missing_entities == 0, f"{missing_entities} 条 occurrence 的 entity_id 不存在"
+
+    non_paragraph = c.execute(
+        "SELECT count(*) FROM entity_occurrences o "
+        "JOIN sections s ON s.chapter_id = o.chapter_id AND s.pn_index = o.section_pn "
+        "WHERE s.section_type <> 'paragraph'"
+    ).fetchone()[0]
+    assert non_paragraph == 0, f"{non_paragraph} 条 occurrence 落在非正文 section"
+
+    duplicate_rows = c.execute(
+        "SELECT count(*) FROM ("
+        "  SELECT entity_id, chapter_id, section_pn FROM entity_occurrences "
+        "  GROUP BY entity_id, chapter_id, section_pn HAVING count(*) > 1"
+        ")"
+    ).fetchone()[0]
+    assert duplicate_rows == 0, f"{duplicate_rows} 组重复 occurrence 三元组"
+
+    stale_counts = c.execute(
+        "SELECT count(*) FROM entities e "
+        "LEFT JOIN ("
+        "  SELECT entity_id, count(*) AS n FROM entity_occurrences GROUP BY entity_id"
+        ") o ON o.entity_id = e.id "
+        "WHERE coalesce(e.occurrences_count, 0) <> coalesce(o.n, 0)"
+    ).fetchone()[0]
+    assert stale_counts == 0, f"{stale_counts} 个实体的 occurrences_count 与 occurrence 行数不一致"
+    print("  occurrence 100% 命中 section；无重复三元组；实体计数一致")
 
     # Verify presence of essential B-Tree indexes
     indexes = {r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='index'")}

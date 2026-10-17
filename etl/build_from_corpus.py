@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Builds SQLite database from OpusOne Corpus intermediate format.
 
-Ensures schema alignment with app/src/main/assets/opusone.db (DB_VERSION 13).
+Ensures schema alignment with app/src/main/assets/opusone.db (DB_VERSION 14).
 """
 import os
 import sys
@@ -133,7 +133,7 @@ for s_ in data["sections"]:
 valid_entity_ids = set()
 for e in data["entities"]:
     desc = (e.get("description") or "").strip()
-    if e.get("type") == "redirect" or desc.startswith("REDIRECT "):
+    if str(e.get("type", "")).upper() == "REDIRECT" or desc.upper().startswith("REDIRECT "):
         continue
     valid_entity_ids.add(e["id"])
     cur.execute("INSERT INTO entities VALUES (?,?,?,?,?,?,?,?)",
@@ -161,7 +161,7 @@ for n in data["sanjiazhu"]:
                  n["jijie"], n["suoyin"], n["zhengyi"], n["other_notes"], n["sentence_id"]))
 
 # Schema version identifier aligned with OpusOneDatabaseHelper.DB_VERSION
-cur.execute("PRAGMA user_version = 13")
+cur.execute("PRAGMA user_version = 14")
 
 # Primary B-Tree indexes for chapter navigation and entity lookup
 cur.executescript("""
