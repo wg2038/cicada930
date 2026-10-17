@@ -67,6 +67,10 @@ val ENTITY_CATEGORIES = listOf(
     EntityCategory("place", "地名"),
     EntityCategory("official", "官职"),
     EntityCategory("state", "邦国"),
+    // 语料里「侯国」使用中文 type 键；不加这一项时 320 个侯国词条
+    // 只能在「全部」里看到，分类浏览会整类消失。
+    EntityCategory("侯国", "侯国"),
+    EntityCategory("tribe", "族群氏族"),
     EntityCategory("event", "历史事件"),
     EntityCategory("identity", "身份群体"),
     EntityCategory("artifact", "器物名物"),

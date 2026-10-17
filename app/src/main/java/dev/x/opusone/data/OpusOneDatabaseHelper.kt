@@ -361,7 +361,7 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
             WHERE id = ? OR label = ? OR aliases LIKE ? ESCAPE '\' OR aliases LIKE ? ESCAPE '\'
             ORDER BY
                 CASE
-                    WHEN type = 'redirect' THEN 3
+                    WHEN lower(type) = 'redirect' THEN 3
                     WHEN id = ? THEN 0
                     WHEN label = ? THEN 1
                     ELSE 2
@@ -378,10 +378,15 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
 
         if (item != null) {
             val desc = item.description.trim()
-            val isRedirect = item.type == "redirect" || desc.startsWith("REDIRECT ") || desc.startsWith("→ 参见 ")
+            val descUpper = desc.uppercase()
+            // 旧语料里存在大写 REDIRECT 与 type="Redirect" 的历史残留；
+            // 大小写敏感的旧判断会把重定向占位条目当成真实词条展示。
+            val isRedirect = item.type.equals("redirect", ignoreCase = true) ||
+                descUpper.startsWith("REDIRECT ") ||
+                desc.startsWith("→ 参见 ")
             if (isRedirect) {
                 val target = when {
-                    desc.startsWith("REDIRECT ") -> desc.removePrefix("REDIRECT ").trim()
+                    descUpper.startsWith("REDIRECT ") -> desc.substring("REDIRECT ".length).trim()
                     desc.startsWith("→ 参见 ") -> desc.removePrefix("→ 参见 ").trim().split(" ", "\n")[0]
                     else -> ""
                 }
@@ -392,7 +397,7 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
                     }
                 }
             }
-            if (item.type != "redirect") {
+            if (!item.type.equals("redirect", ignoreCase = true)) {
                 return item
             }
         }
@@ -414,9 +419,9 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
     fun getEntitiesByType(type: String, limit: Int = 100, offset: Int = 0): List<EntityItem> {
         val list = mutableListOf<EntityItem>()
         val query = if (type.isBlank() || type == "all") {
-            "SELECT id, label, type, type_name_zh, aliases, description, tags, occurrences_count FROM entities WHERE type != 'redirect' ORDER BY occurrences_count DESC LIMIT ? OFFSET ?"
+            "SELECT id, label, type, type_name_zh, aliases, description, tags, occurrences_count FROM entities WHERE lower(type) != 'redirect' ORDER BY occurrences_count DESC LIMIT ? OFFSET ?"
         } else {
-            "SELECT id, label, type, type_name_zh, aliases, description, tags, occurrences_count FROM entities WHERE type = ? AND type != 'redirect' ORDER BY occurrences_count DESC LIMIT ? OFFSET ?"
+            "SELECT id, label, type, type_name_zh, aliases, description, tags, occurrences_count FROM entities WHERE type = ? AND lower(type) != 'redirect' ORDER BY occurrences_count DESC LIMIT ? OFFSET ?"
         }
         val args = if (type.isBlank() || type == "all") {
             arrayOf(limit.toString(), offset.toString())
@@ -518,22 +523,32 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
         val db = getReadableDb()
         val sql = """
             SELECT t.id, t.chapter_id, t.chapter_title, t.content, t.plain_content,
-                (
-                    SELECT s.pn_index FROM sections s
-                    WHERE s.chapter_id = t.chapter_id
-                      AND (
-                          (s.section_type = 'heading2' AND s.heading_text LIKE '%太史公曰%')
-                          OR (s.plain_text LIKE '太史公曰%' OR s.plain_text LIKE '太史公曰：%' OR s.tagged_content LIKE '%太史公曰%')
-                      )
-                    ORDER BY
-                      CASE
-                        WHEN s.section_type = 'heading2' AND s.heading_text = '太史公曰' THEN 1
-                        WHEN s.section_type = 'heading2' AND s.heading_text LIKE '%太史公曰%' THEN 2
-                        WHEN s.plain_text LIKE '太史公曰%' THEN 3
-                        ELSE 4
-                      END ASC,
-                      s.order_in_chapter DESC
-                    LIMIT 1
+                COALESCE(
+                    (
+                        SELECT s.pn_index FROM sections s
+                        WHERE s.chapter_id = t.chapter_id
+                          AND (
+                              (s.section_type = 'heading2' AND s.heading_text LIKE '%太史公曰%')
+                              OR (s.plain_text LIKE '太史公曰%' OR s.plain_text LIKE '太史公曰：%' OR s.tagged_content LIKE '%太史公曰%')
+                          )
+                        ORDER BY
+                          CASE
+                            WHEN s.section_type = 'heading2' AND s.heading_text = '太史公曰' THEN 1
+                            WHEN s.section_type = 'heading2' AND s.heading_text LIKE '%太史公曰%' THEN 2
+                            WHEN s.plain_text LIKE '太史公曰%' THEN 3
+                            ELSE 4
+                          END ASC,
+                          s.order_in_chapter ASC
+                        LIMIT 1
+                    ),
+                    -- 十表等章节的「太史公曰」只存在于年表网格中，上面的匹配会落空；
+                    -- 此时退回本章第一段非空正文，避免跳转到空的占位段。
+                    (
+                        SELECT s.pn_index FROM sections s
+                        WHERE s.chapter_id = t.chapter_id AND trim(s.plain_text) != ''
+                        ORDER BY s.order_in_chapter ASC
+                        LIMIT 1
+                    )
                 ) AS target_pn
             FROM taishigongyue t
             ORDER BY t.chapter_id ASC
@@ -543,7 +558,8 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
                 val content = cursor.getString(3) ?: ""
                 var targetPn = cursor.getString(5) ?: ""
                 if (targetPn.isBlank()) {
-                    targetPn = Regex("^\\[([^\\]]+)\\]").find(content)?.groupValues?.get(1) ?: ""
+                    // 跳过 `[1]` 这类后接空行的占位标记，取第一个真正带正文的段号。
+                    targetPn = Regex("\\[([^\\]]+)]\\s*[^\\[\\s]").find(content)?.groupValues?.get(1) ?: ""
                 }
                 list.add(
                     TaiShiGongYueItem(
@@ -656,15 +672,6 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
     /** 转义 LIKE 查询中的 SQLite 通配符 %, _, \ */
     fun escapeLikeParam(field: String): String =
         field.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-
-    /** 对 FTS 查询关键词过滤特殊字符并以双引号安全包裹，防止 SQLite 语法报错 */
-    fun sanitizeFtsQuery(query: String): String {
-        val clean = query.replace(Regex("[\"\'*^:()+\\-~]"), " ").trim()
-        if (clean.isBlank()) return "\"\""
-        return clean.split(Regex("\\s+"))
-            .filter { it.isNotBlank() }
-            .joinToString(" ") { "\"${it.replace("\"", "\"\"")}\"" }
-    }
 
     private fun likeArg(field: String): String =
         "%" + escapeLikeParam(field) + "%"
@@ -788,7 +795,7 @@ class OpusOneDatabaseHelper private constructor(private val context: Context) :
                 """
                 SELECT id, label, type_name_zh, description, occurrences_count, aliases
                 FROM entities
-                WHERE $where AND type != 'redirect'
+                WHERE $where AND lower(type) != 'redirect'
                 ORDER BY occurrences_count DESC
                 LIMIT ?
                 """,

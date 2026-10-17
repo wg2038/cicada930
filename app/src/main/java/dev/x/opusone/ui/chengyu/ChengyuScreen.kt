@@ -57,29 +57,37 @@ class ChengyuViewModel(application: Application) : AndroidViewModel(application)
                 _uiState.update { it.copy(isLoading = false) }
             }) {
                 val all = repository.getAllChengyu()
-                _uiState.update { it.copy(list = all, filteredList = all, isLoading = false) }
+                // 数据加载完成时用户可能已经输入了搜索词；不能直接用 all
+                // 覆盖 filteredList，否则输入框有字、列表却是全量。
+                _uiState.update {
+                    it.copy(
+                        list = all,
+                        filteredList = filterChengyu(all, it.searchQuery),
+                        isLoading = false
+                    )
+                }
             }
         }
     }
 
     fun onSearchChange(query: String) {
         _uiState.update { state ->
-            val filtered = if (query.isBlank()) {
-                state.list
-            } else {
-                val q = query.trim()
-                val simp = dev.x.opusone.util.ChineseConverter.toSimplified(q)
-                val trad = dev.x.opusone.util.ChineseConverter.toTraditional(q)
-                val queryVariants = setOf(q, simp, trad).filter { it.isNotBlank() }
-                state.list.filter { item ->
-                    queryVariants.any { v ->
-                        item.word.contains(v, ignoreCase = true) ||
-                            item.meaning.contains(v, ignoreCase = true) ||
-                            item.chapterTitle.contains(v, ignoreCase = true)
-                    }
-                }
-            }
-            state.copy(searchQuery = query, filteredList = filtered)
+            state.copy(searchQuery = query, filteredList = filterChengyu(state.list, query))
+        }
+    }
+}
+
+private fun filterChengyu(list: List<ChengyuItem>, query: String): List<ChengyuItem> {
+    if (query.isBlank()) return list
+    val q = query.trim()
+    val simp = dev.x.opusone.util.ChineseConverter.toSimplified(q)
+    val trad = dev.x.opusone.util.ChineseConverter.toTraditional(q)
+    val queryVariants = setOf(q, simp, trad).filter { it.isNotBlank() }
+    return list.filter { item ->
+        queryVariants.any { v ->
+            item.word.contains(v, ignoreCase = true) ||
+                item.meaning.contains(v, ignoreCase = true) ||
+                item.chapterTitle.contains(v, ignoreCase = true)
         }
     }
 }

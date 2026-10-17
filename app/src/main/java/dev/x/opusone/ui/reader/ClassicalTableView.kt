@@ -173,9 +173,10 @@ private fun TableGrid(
     val hScrollState = rememberScrollState()
     val scriptMode = LocalChineseScript.current
 
-    // 首列自适应宽度
+    // 首列自适应宽度：除了表头文字，还要容纳最长的行标（如 "[365]"）
     val firstHeader = table.headers.getOrElse(0) { "序号" }
-    val indexColWidth: Dp = if (firstHeader.length > 2) 76.dp else 56.dp
+    val longestIndexCell = table.rows.maxOfOrNull { it.indexCell.length } ?: 0
+    val indexColWidth: Dp = if (firstHeader.length > 2 || longestIndexCell > 4) 76.dp else 56.dp
     // 单列表（如卷十三「帝王」条）整格都是叙述文字，窄列会把整句挤成十几行
     val dataColWidth: Dp = if (table.colCount <= 2) 320.dp else 104.dp
 

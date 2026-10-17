@@ -63,30 +63,37 @@ class WarsViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update { it.copy(isLoading = false) }
             }) {
                 val all = repository.getAllWars()
-                _uiState.update { it.copy(list = all, filteredList = all, isLoading = false) }
+                // 同 ChengyuViewModel：加载完成时保留用户已经输入的过滤条件。
+                _uiState.update {
+                    it.copy(
+                        list = all,
+                        filteredList = filterWars(all, it.searchQuery),
+                        isLoading = false
+                    )
+                }
             }
         }
     }
 
     fun onSearchChange(query: String) {
         _uiState.update { state ->
-            val filtered = if (query.isBlank()) {
-                state.list
-            } else {
-                val q = query.trim()
-                val simp = dev.x.opusone.util.ChineseConverter.toSimplified(q)
-                val trad = dev.x.opusone.util.ChineseConverter.toTraditional(q)
-                val queryVariants = setOf(q, simp, trad).filter { it.isNotBlank() }
-                state.list.filter { item ->
-                    queryVariants.any { v ->
-                        item.name.contains(v, ignoreCase = true) ||
-                            item.description.contains(v, ignoreCase = true) ||
-                            item.fullDescription.contains(v, ignoreCase = true) ||
-                            item.chapterTitle.contains(v, ignoreCase = true)
-                    }
-                }
-            }
-            state.copy(searchQuery = query, filteredList = filtered)
+            state.copy(searchQuery = query, filteredList = filterWars(state.list, query))
+        }
+    }
+}
+
+private fun filterWars(list: List<WarItem>, query: String): List<WarItem> {
+    if (query.isBlank()) return list
+    val q = query.trim()
+    val simp = dev.x.opusone.util.ChineseConverter.toSimplified(q)
+    val trad = dev.x.opusone.util.ChineseConverter.toTraditional(q)
+    val queryVariants = setOf(q, simp, trad).filter { it.isNotBlank() }
+    return list.filter { item ->
+        queryVariants.any { v ->
+            item.name.contains(v, ignoreCase = true) ||
+                item.description.contains(v, ignoreCase = true) ||
+                item.fullDescription.contains(v, ignoreCase = true) ||
+                item.chapterTitle.contains(v, ignoreCase = true)
         }
     }
 }

@@ -105,12 +105,15 @@ fun ReaderScreen(
         viewModel.loadChapter(chapterId, targetSectionPn)
     }
 
+    // 显式跳转目标优先；否则恢复上次阅读位置。
+    val scrollTargetPn = targetSectionPn?.takeIf { it.isNotBlank() } ?: uiState.resumePn
+
     // 跨模块或卷段变更时准确定位目标段落
-    LaunchedEffect(chapterId, targetSectionPn, uiState.sections) {
-        if (!targetSectionPn.isNullOrBlank() && uiState.sections.isNotEmpty()) {
-            val normalizedTarget = normalizePnIndex(targetSectionPn)
+    LaunchedEffect(chapterId, scrollTargetPn, uiState.sections) {
+        if (!scrollTargetPn.isNullOrBlank() && uiState.sections.isNotEmpty()) {
+            val normalizedTarget = normalizePnIndex(scrollTargetPn)
             val targetIdx = uiState.sections.indexOfFirst {
-                it.pnIndex == targetSectionPn || normalizePnIndex(it.pnIndex) == normalizedTarget
+                it.pnIndex == scrollTargetPn || normalizePnIndex(it.pnIndex) == normalizedTarget
             }
             if (targetIdx >= 0) {
                 listState.scrollToItem(targetIdx + 1) // +1 为顶部篇章卡
@@ -241,9 +244,9 @@ fun ReaderScreen(
                     // 从 ReaderUiState.sectionNotesMap 中直接获取后台预处理好的注疏列表（O(1) 查询），
                     // 彻底消除列表快速滑动时在主线程进行 O(N*M) 遍历和海量临时对象分配（解决 GC 掉帧）。
                     val filteredNotes = uiState.sectionNotesMap[section.id] ?: emptyList()
-                    val isTargeted = !targetSectionPn.isNullOrBlank() && (
-                        section.pnIndex == targetSectionPn ||
-                        normalizePnIndex(section.pnIndex) == normalizePnIndex(targetSectionPn)
+                    val isTargeted = !scrollTargetPn.isNullOrBlank() && (
+                        section.pnIndex == scrollTargetPn ||
+                        normalizePnIndex(section.pnIndex) == normalizePnIndex(scrollTargetPn)
                     )
 
                     Box(
@@ -414,23 +417,35 @@ private fun SectionItemRow(
             .replace(Regex("^\\[[0-9a-zA-Z_.]+\\]\\s*"), "")
             .replace(Regex("(?i)^h\\d+[_\\s]?\\d*\\s*"), "")
             .trim()
-        if (cleanHeading.isNotBlank()) {
-            // 智能吸收古籍“十表”中由 Markdown 划分遗留的单字“表”结构标题
-            if (cleanHeading == "表") return
+        // 智能吸收古籍“十表”中由 Markdown 划分遗留的单字“表”结构标题
+        if (cleanHeading == "表") return
 
-            when (section.headingLevel) {
-                1, 2 -> Text(
-                    text = cleanHeading.toScript(scriptMode),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
-                )
-                else -> Text(
-                    text = cleanHeading.toScript(scriptMode),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(top = 12.dp, bottom = 2.dp)
-                )
+        // 标题与注疏必须放在同一个 Column 里。SectionItemRow 外层是 Box，
+        // 若把 Text 与 Card 作为两个平级子节点发射，二者会重叠在同一位置，
+        // 导致标题被注疏卡片遮挡（v0.2.2 的排版事故）。
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (cleanHeading.isNotBlank()) {
+                when (section.headingLevel) {
+                    1, 2 -> Text(
+                        text = cleanHeading.toScript(scriptMode),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                    )
+                    else -> Text(
+                        text = cleanHeading.toScript(scriptMode),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(top = 12.dp, bottom = 2.dp)
+                    )
+                }
+            }
+            // 标题段落同样可能挂有注疏（例如「太史公曰」标题下的总注）。
+            if (showSanJiaInline && sanjiazhuNotes.isNotEmpty()) {
+                SanJiaZhuCard(sanjiazhuNotes)
             }
         }
         return
@@ -640,67 +655,76 @@ private fun SectionItemRow(
         }
 
         if (showSanJiaInline && sanjiazhuNotes.isNotEmpty()) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, top = 4.dp, bottom = 6.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = "三家注".toScript(scriptMode),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            SanJiaZhuCard(sanjiazhuNotes)
+        }
+    }
+}
 
-                    sanjiazhuNotes.forEach { note ->
-                        val cleanAnchor = note.anchorText.trim(
-                            '。', '，', '、', '；', '：', '！', '？', '」', '』', '》', '）',
-                            '〉', '〈', '「', '『', '《', '（', '【', '】', ' ', '　', '"', '\'', '”', '“'
+/**
+ * 三家注卡片。正文段落与标题段落共用，避免两处各写一份渲染逻辑后逐渐失配。
+ */
+@Composable
+private fun SanJiaZhuCard(notes: List<SanJiaZhuNote>) {
+    val scriptMode = LocalChineseScript.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp, top = 4.dp, bottom = 6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "三家注".toScript(scriptMode),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            notes.forEach { note ->
+                val cleanAnchor = note.anchorText.trim(
+                    '。', '，', '、', '；', '：', '！', '？', '」', '』', '》', '）',
+                    '〉', '〈', '「', '『', '《', '（', '【', '】', ' ', '　', '"', '\'', '”', '“'
+                )
+                val cleanSimp = cleanAnchor.toScript(ChineseScriptMode.SIMPLIFIED)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (cleanSimp.length >= 2 && cleanSimp !in setOf("者", "也", "者也", "之", "之子")) {
+                        Text(
+                            text = "【${cleanAnchor.toScript(scriptMode)}】",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                        val cleanSimp = cleanAnchor.toScript(ChineseScriptMode.SIMPLIFIED)
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (cleanSimp.length >= 2 && cleanSimp !in setOf("者", "也", "者也", "之", "之子")) {
-                                Text(
-                                    text = "【${cleanAnchor.toScript(scriptMode)}】",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            if (note.jijie.isNotBlank()) {
-                                SanJiaLine(
-                                    label = "集解".toScript(scriptMode),
-                                    text = note.jijie.replace(Regex("^【集解】[:：\\s]*"), "").trim().toScript(scriptMode)
-                                )
-                            }
-                            if (note.suoyin.isNotBlank()) {
-                                SanJiaLine(
-                                    label = "索隐".toScript(scriptMode),
-                                    text = note.suoyin.replace(Regex("^【索隐】[:：\\s]*"), "").trim().toScript(scriptMode)
-                                )
-                            }
-                            if (note.zhengyi.isNotBlank()) {
-                                SanJiaLine(
-                                    label = "正义".toScript(scriptMode),
-                                    text = note.zhengyi.replace(Regex("^【正义】[:：\\s]*"), "").trim().toScript(scriptMode)
-                                )
-                            }
-                            if (note.otherNotes.isNotBlank()) {
-                                SanJiaLine(
-                                    label = "考证/佚存".toScript(scriptMode),
-                                    text = note.otherNotes.toScript(scriptMode)
-                                )
-                            }
-                        }
+                    }
+                    if (note.jijie.isNotBlank()) {
+                        SanJiaLine(
+                            label = "集解".toScript(scriptMode),
+                            text = note.jijie.replace(Regex("^【集解】[:：\\s]*"), "").trim().toScript(scriptMode)
+                        )
+                    }
+                    if (note.suoyin.isNotBlank()) {
+                        SanJiaLine(
+                            label = "索隐".toScript(scriptMode),
+                            text = note.suoyin.replace(Regex("^【索隐】[:：\\s]*"), "").trim().toScript(scriptMode)
+                        )
+                    }
+                    if (note.zhengyi.isNotBlank()) {
+                        SanJiaLine(
+                            label = "正义".toScript(scriptMode),
+                            text = note.zhengyi.replace(Regex("^【正义】[:：\\s]*"), "").trim().toScript(scriptMode)
+                        )
+                    }
+                    if (note.otherNotes.isNotBlank()) {
+                        SanJiaLine(
+                            label = "考证/佚存".toScript(scriptMode),
+                            text = note.otherNotes.toScript(scriptMode)
+                        )
                     }
                 }
             }

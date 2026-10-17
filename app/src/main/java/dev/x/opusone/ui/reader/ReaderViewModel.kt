@@ -8,9 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.x.opusone.data.OpusOneRepository
 import dev.x.opusone.data.model.*
-import dev.x.opusone.theme.ChineseScriptMode
 import dev.x.opusone.util.guardCoroutine
-import dev.x.opusone.util.toScript
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +38,8 @@ data class ReaderUiState(
     val isBookmarked: Boolean = false,
     val bookmarkedPnIndex: String? = null,
     val quoteDialogData: Pair<String, String>? = null,
+    /** 无显式跳转目标时，恢复上次阅读位置。 */
+    val resumePn: String? = null,
     val fontSize: Float = 19f,
     val lineSpacingMultiplier: Float = 1.9f
 )
@@ -59,6 +59,10 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
     @Volatile
     private var currentLoadChapterId: Int = -1
 
+    /** 每次加载自增；用于丢弃同一章节内多次并发加载（如切换合并段落）的过期结果。 */
+    @Volatile
+    private var loadGeneration: Int = 0
+
     private val readerPrefs: SharedPreferences by lazy {
         getApplication<Application>().getSharedPreferences("opusone_reader_prefs", Context.MODE_PRIVATE)
     }
@@ -71,19 +75,36 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
     )
     val uiState: StateFlow<ReaderUiState> = _uiState.asStateFlow()
 
-    fun loadChapter(chapterId: Int, targetSectionPn: String? = null) {
+    fun loadChapter(chapterId: Int, targetSectionPn: String? = null, applyResume: Boolean = true) {
         loadJob?.cancel()
         val requestChapterId = chapterId
+        val generation = ++loadGeneration
         currentLoadChapterId = chapterId
         loadJob = viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isLoading = true,
-                    chapterId = chapterId
-                )
+            _uiState.update { state ->
+                // 切换篇章时清空上一卷的正文与临时 UI 状态，避免加载期间
+                // 旧章节内容继续显示（或被误当成新章节的书签/弹窗数据）。
+                if (state.chapterId == chapterId) {
+                    state.copy(isLoading = true, chapterId = chapterId)
+                } else {
+                    state.copy(
+                        chapterId = chapterId,
+                        chapter = null,
+                        sections = emptyList(),
+                        sectionNotesMap = emptyMap(),
+                        resumePn = null,
+                        selectedEntity = null,
+                        isEntityLoading = false,
+                        showEntitySheet = false,
+                        quoteDialogData = null,
+                        isBookmarked = false,
+                        bookmarkedPnIndex = null,
+                        isLoading = true
+                    )
+                }
             }
 
-            val (ch, secs, notesMap) = withContext(Dispatchers.IO) {
+            val (ch, secs, notesMap, resumePn) = withContext(Dispatchers.IO) {
                 val chapter = repository.getChapterById(chapterId)
                 val rawSections = repository.getSectionsByChapter(chapterId)
                 val sections = rawSections.filter { sec ->
@@ -100,22 +121,31 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                     true
                 }
                 val sanjiazhu = repository.getSanJiaZhuNotesByChapter(chapterId)
-                val rawNotesMap = indexSanJiaZhuNotes(sections, sanjiazhu)
+                // 注疏锚点可能落在被过滤掉的标题/空段上；必须基于原始段落
+                // 建索引并向后滚动到下一个可见段，否则这些注疏永远不会显示。
+                val rawNotesMap = indexSanJiaZhuNotes(rawSections, sections, sanjiazhu)
                 val (finalSections, finalMap) = if (_uiState.value.mergeParagraphs) {
                     mergeSectionsWithNotes(sections, rawNotesMap)
                 } else {
                     sections to rawNotesMap
                 }
+                val historyPn = if (applyResume && targetSectionPn.isNullOrBlank()) {
+                    repository.getReadingHistory(chapterId)?.first?.takeIf { it.isNotBlank() }
+                } else {
+                    null
+                }
 
                 data class LoadedChapter(
                     val chapter: Chapter?,
                     val sections: List<Section>,
-                    val notesMap: Map<Int, List<SanJiaZhuNote>>
+                    val notesMap: Map<Int, List<SanJiaZhuNote>>,
+                    val resumePn: String?
                 )
-                LoadedChapter(chapter, finalSections, finalMap)
+                LoadedChapter(chapter, finalSections, finalMap, historyPn)
             }
 
-            if (requestChapterId != currentLoadChapterId) return@launch
+            // 同一章节的重复加载（切换合并段落）也不能让较早的旧结果覆盖新结果。
+            if (generation != loadGeneration || requestChapterId != currentLoadChapterId) return@launch
             val existingBm = repository.getBookmarkForChapter(chapterId)
             val isBm = existingBm != null
             val bmPn = existingBm?.pnIndex
@@ -125,6 +155,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                     chapter = ch,
                     sections = secs,
                     sectionNotesMap = notesMap,
+                    resumePn = resumePn,
                     isBookmarked = isBm,
                     bookmarkedPnIndex = bmPn,
                     isLoading = false
@@ -140,36 +171,10 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
      * 优先采用 sentenceId 精确映射段落，缺失时回退到有效锚点文本匹配。
      */
     private fun indexSanJiaZhuNotes(
-        sections: List<Section>,
+        allSections: List<Section>,
+        visibleSections: List<Section>,
         sanjiazhu: List<SanJiaZhuNote>
-    ): Map<Int, List<SanJiaZhuNote>> {
-        val invalidAnchors = setOf("者也", "之子", "者，", "者", "也", "之")
-        val cleanedNotes = sanjiazhu.map { note ->
-            val cleanAnchor = note.anchorText.trim(
-                '。', '，', '、', '；', '：', '！', '？', '」', '』', '》', '）',
-                '〉', '〈', '「', '『', '《', '（', '【', '】', ' ', '　', '"', '\'', '”', '“'
-            )
-            val cleanSimp = cleanAnchor.toScript(ChineseScriptMode.SIMPLIFIED)
-            val hasValidAnchor = (cleanSimp.length >= 2 && cleanSimp !in invalidAnchors) || note.sentenceId.isNotBlank()
-            val hasContent = note.jijie.isNotBlank() || note.suoyin.isNotBlank() || note.zhengyi.isNotBlank() || note.otherNotes.isNotBlank()
-            Triple(note, cleanSimp, hasValidAnchor && hasContent)
-        }
-        val map = HashMap<Int, List<SanJiaZhuNote>>(sections.size)
-        for (sec in sections) {
-            val matched = cleanedNotes.filter { (note, cleanSimp, isValid) ->
-                if (!isValid) return@filter false
-                if (note.sentenceId.isNotBlank()) {
-                    note.sentenceId == sec.pnIndex
-                } else {
-                    cleanSimp in sec.plainText
-                }
-            }.map { it.first }
-            if (matched.isNotEmpty()) {
-                map[sec.id] = matched
-            }
-        }
-        return map
-    }
+    ): Map<Int, List<SanJiaZhuNote>> = SanJiaZhuIndexer.index(allSections, visibleSections, sanjiazhu)
 
     /**
      * 将连续的普通正文段落（[Section.sectionType] == "paragraph"）合并为更少的大段落，
@@ -249,7 +254,8 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleMergeParagraphs() {
         val newVal = !_uiState.value.mergeParagraphs
         _uiState.update { it.copy(mergeParagraphs = newVal) }
-        loadChapter(_uiState.value.chapterId)
+        // 重新排版不应把阅读位置拉回上次记录的段落。
+        loadChapter(_uiState.value.chapterId, applyResume = false)
     }
 
     fun toggleBookmark(currentPnIndex: String = "") {

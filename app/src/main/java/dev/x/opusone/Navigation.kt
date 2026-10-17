@@ -93,11 +93,40 @@ fun MainNavigation(
     onSetTheme: (ThemeStyle) -> Unit,
     onSetDarkMode: (DarkMode) -> Unit,
     currentScript: ChineseScriptMode = ChineseScriptMode.SIMPLIFIED,
-    onSetScript: (ChineseScriptMode) -> Unit = {}
+    onSetScript: (ChineseScriptMode) -> Unit = {},
+    isConverterReady: Boolean = true
 ) {
+    // 返回栈必须存活于 key(isConverterReady) 之外。此前 key 直接包住整个
+    // MainNavigation，字典加载完成触发重组时返回栈被重建为 [Home]，
+    // 用户正在读的章节被静默弹回首页。
     var backStack by rememberSaveable(stateSaver = backStackSaver) {
         mutableStateOf(listOf<Screen>(Screen.Home))
     }
+    key(isConverterReady) {
+        MainNavigationContent(
+            backStack = backStack,
+            onBackStackChange = { backStack = it },
+            currentThemeStyle = currentThemeStyle,
+            currentDarkMode = currentDarkMode,
+            onSetTheme = onSetTheme,
+            onSetDarkMode = onSetDarkMode,
+            currentScript = currentScript,
+            onSetScript = onSetScript
+        )
+    }
+}
+
+@Composable
+private fun MainNavigationContent(
+    backStack: List<Screen>,
+    onBackStackChange: (List<Screen>) -> Unit,
+    currentThemeStyle: ThemeStyle,
+    currentDarkMode: DarkMode,
+    onSetTheme: (ThemeStyle) -> Unit,
+    onSetDarkMode: (DarkMode) -> Unit,
+    currentScript: ChineseScriptMode,
+    onSetScript: (ChineseScriptMode) -> Unit
+) {
     var isBackNav by remember { mutableStateOf(false) }
     val currentScreen = backStack.lastOrNull() ?: Screen.Home
 
@@ -107,9 +136,9 @@ fun MainNavigation(
         isBackNav = false
         // 跨模块跳转阅读器时若栈顶已是阅读器，采用 launchSingleTop 策略替换栈顶，避免返回栈反复堆积
         if (screen is Screen.Reader && backStack.lastOrNull() is Screen.Reader) {
-            backStack = backStack.dropLast(1) + screen
+            onBackStackChange(backStack.dropLast(1) + screen)
         } else {
-            backStack = backStack + screen
+            onBackStackChange(backStack + screen)
         }
     }
 
@@ -126,19 +155,19 @@ fun MainNavigation(
         if (screen == Screen.Home) {
             if (currentScreen != Screen.Home) {
                 isBackNav = true
-                backStack = listOf(Screen.Home)
+                onBackStackChange(listOf(Screen.Home))
             }
             return
         }
         // Tab 间平级切换，转场方向固定为前进
         isBackNav = false
-        backStack = listOf(Screen.Home, screen)
+        onBackStackChange(listOf(Screen.Home, screen))
     }
 
     fun popBack() {
         if (backStack.size > 1) {
             isBackNav = true
-            backStack = backStack.dropLast(1)
+            onBackStackChange(backStack.dropLast(1))
         }
     }
 
@@ -181,7 +210,9 @@ fun MainNavigation(
             }
 
             is Screen.Reader -> {
-                val readerViewModel: ReaderViewModel = viewModel(key = "reader_${screen.chapterId}")
+                // 单一阅读器 ViewModel：按章节 key 创建会在每次切换篇章时
+                // 新开实例，activity 作用域内无限累积且各自缓存整章正文。
+                val readerViewModel: ReaderViewModel = viewModel()
                 ReaderScreen(
                     chapterId = screen.chapterId,
                     targetSectionPn = screen.targetPn,

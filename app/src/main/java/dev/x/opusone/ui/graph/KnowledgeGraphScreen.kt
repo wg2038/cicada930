@@ -206,7 +206,7 @@ val GRAPH_PRESETS = listOf(
 
             // 魏国信陵君
             GraphNode("信陵君", "信陵君魏无忌", "魏昭王少子", 560f, 140f, ChartTone.CRIMSON, 1),
-            GraphNode("侯赢", "侯嬴", "大梁夷门监", 460f, 300f, ChartTone.INDIGO, 2),
+            GraphNode("侯嬴", "侯嬴", "大梁夷门监", 460f, 300f, ChartTone.INDIGO, 2),
             GraphNode("朱亥", "朱亥", "椎杀晋鄙", 660f, 300f, ChartTone.AMBER, 2),
 
             // 赵国平原君
@@ -219,7 +219,7 @@ val GRAPH_PRESETS = listOf(
         ),
         edges = listOf(
             GraphEdge("孟尝君", "冯谖", "门客市义"),
-            GraphEdge("信陵君", "侯赢", "宾礼参谋"),
+            GraphEdge("信陵君", "侯嬴", "宾礼参谋"),
             GraphEdge("信陵君", "朱亥", "勇士夺军"),
             GraphEdge("平原君", "毛遂", "自荐使楚"),
             GraphEdge("春申君", "李园", "进女遇害", true)
@@ -398,11 +398,13 @@ fun KnowledgeGraphScreen(
         }
     }
 
-    var hasAutoFit by remember(uiState.selectedPresetIndex) { mutableStateOf(false) }
+    // 每个预设在首次拿到尺寸时自动适配；屏幕旋转 / 分屏改变视口后也要重新适配，
+    // 否则画布会停留在旧尺寸算出的缩放与偏移上。
+    var fittedSize by remember(uiState.selectedPresetIndex) { mutableStateOf(Size.Zero) }
     LaunchedEffect(uiState.selectedPresetIndex, viewportSize) {
-        if (!hasAutoFit && viewportSize.width > 0f && viewportSize.height > 0f) {
+        if (viewportSize.width > 0f && viewportSize.height > 0f && viewportSize != fittedSize) {
             resetView()
-            hasAutoFit = true
+            fittedSize = viewportSize
         }
     }
 

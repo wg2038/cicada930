@@ -92,16 +92,15 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        key(isConverterReady) {
-                            MainNavigation(
-                                currentThemeStyle = themeStyle,
-                                currentDarkMode = darkMode,
-                                onSetTheme = { setTheme(it) },
-                                onSetDarkMode = { setDarkMode(it) },
-                                currentScript = scriptMode,
-                                onSetScript = { setScript(it) }
-                            )
-                        }
+                        MainNavigation(
+                            currentThemeStyle = themeStyle,
+                            currentDarkMode = darkMode,
+                            onSetTheme = { setTheme(it) },
+                            onSetDarkMode = { setDarkMode(it) },
+                            currentScript = scriptMode,
+                            onSetScript = { setScript(it) },
+                            isConverterReady = isConverterReady
+                        )
                     }
                 }
             }

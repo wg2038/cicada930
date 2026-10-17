@@ -331,11 +331,21 @@ fun ChronicleTimelineScreen(
         }
     }
 
-    var hasAutoFit by remember { mutableStateOf(false) }
+    // 视口尺寸变化（旋转 / 分屏）后重新适配，而不只是首次进入时适配一次。
+    var fittedSize by remember { mutableStateOf(Size.Zero) }
     LaunchedEffect(viewportSize) {
-        if (!hasAutoFit && viewportSize.width > 0f && viewportSize.height > 0f) {
+        if (viewportSize.width > 0f && viewportSize.height > 0f && viewportSize != fittedSize) {
             fitToScreen()
-            hasAutoFit = true
+            fittedSize = viewportSize
+        }
+    }
+
+    // 时间线 ViewModel 是 activity 作用域的，离开页面后选中节点与弹窗状态会残留；
+    // 下次进入时会出现「未点任何节点却高亮/弹窗」的假象。
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.dismissDialog()
+            viewModel.clearSelection()
         }
     }
 
@@ -357,7 +367,16 @@ fun ChronicleTimelineScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        // 与系统返回手势保持一致：先关弹窗，再清选中，最后才退出页面。
+                        if (uiState.showNodeDialog) {
+                            viewModel.dismissDialog()
+                        } else if (uiState.selectedNodeId != null) {
+                            viewModel.clearSelection()
+                        } else {
+                            onBackClick()
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = cd("返回"))
                     }
                 },
