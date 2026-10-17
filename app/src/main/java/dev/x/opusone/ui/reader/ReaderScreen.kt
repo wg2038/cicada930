@@ -105,15 +105,12 @@ fun ReaderScreen(
         viewModel.loadChapter(chapterId, targetSectionPn)
     }
 
-    // 显式跳转目标优先；否则恢复上次阅读位置。
-    val scrollTargetPn = targetSectionPn?.takeIf { it.isNotBlank() } ?: uiState.resumePn
-
-    // 跨模块或卷段变更时准确定位目标段落
-    LaunchedEffect(chapterId, scrollTargetPn, uiState.sections) {
-        if (!scrollTargetPn.isNullOrBlank() && uiState.sections.isNotEmpty()) {
-            val normalizedTarget = normalizePnIndex(scrollTargetPn)
+    // 跨模块或从检索/书签跳转时，准确定位并滚动到目标段落
+    LaunchedEffect(chapterId, targetSectionPn, uiState.sections) {
+        if (!targetSectionPn.isNullOrBlank() && uiState.sections.isNotEmpty()) {
+            val normalizedTarget = normalizePnIndex(targetSectionPn)
             val targetIdx = uiState.sections.indexOfFirst {
-                it.pnIndex == scrollTargetPn || normalizePnIndex(it.pnIndex) == normalizedTarget
+                it.pnIndex == targetSectionPn || normalizePnIndex(it.pnIndex) == normalizedTarget
             }
             if (targetIdx >= 0) {
                 listState.scrollToItem(targetIdx + 1) // +1 为顶部篇章卡
@@ -244,9 +241,9 @@ fun ReaderScreen(
                     // 从 ReaderUiState.sectionNotesMap 中直接获取后台预处理好的注疏列表（O(1) 查询），
                     // 彻底消除列表快速滑动时在主线程进行 O(N*M) 遍历和海量临时对象分配（解决 GC 掉帧）。
                     val filteredNotes = uiState.sectionNotesMap[section.id] ?: emptyList()
-                    val isTargeted = !scrollTargetPn.isNullOrBlank() && (
-                        section.pnIndex == scrollTargetPn ||
-                        normalizePnIndex(section.pnIndex) == normalizePnIndex(scrollTargetPn)
+                    val isTargeted = !targetSectionPn.isNullOrBlank() && (
+                        section.pnIndex == targetSectionPn ||
+                        normalizePnIndex(section.pnIndex) == normalizePnIndex(targetSectionPn)
                     )
 
                     Box(
@@ -420,32 +417,20 @@ private fun SectionItemRow(
         // 智能吸收古籍“十表”中由 Markdown 划分遗留的单字“表”结构标题
         if (cleanHeading == "表") return
 
-        // 标题与注疏必须放在同一个 Column 里。SectionItemRow 外层是 Box，
-        // 若把 Text 与 Card 作为两个平级子节点发射，二者会重叠在同一位置，
-        // 导致标题被注疏卡片遮挡（v0.2.2 的排版事故）。
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (cleanHeading.isNotBlank()) {
-                when (section.headingLevel) {
-                    1, 2 -> Text(
-                        text = cleanHeading.toScript(scriptMode),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
-                    )
-                    else -> Text(
-                        text = cleanHeading.toScript(scriptMode),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 2.dp)
-                    )
-                }
-            }
-            // 标题段落同样可能挂有注疏（例如「太史公曰」标题下的总注）。
-            if (showSanJiaInline && sanjiazhuNotes.isNotEmpty()) {
-                SanJiaZhuCard(sanjiazhuNotes)
+        if (cleanHeading.isNotBlank()) {
+            when (section.headingLevel) {
+                1, 2 -> Text(
+                    text = cleanHeading.toScript(scriptMode),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                )
+                else -> Text(
+                    text = cleanHeading.toScript(scriptMode),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(top = 12.dp, bottom = 2.dp)
+                )
             }
         }
         return

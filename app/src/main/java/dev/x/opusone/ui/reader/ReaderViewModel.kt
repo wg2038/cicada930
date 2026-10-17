@@ -38,8 +38,6 @@ data class ReaderUiState(
     val isBookmarked: Boolean = false,
     val bookmarkedPnIndex: String? = null,
     val quoteDialogData: Pair<String, String>? = null,
-    /** 无显式跳转目标时，恢复上次阅读位置。 */
-    val resumePn: String? = null,
     val fontSize: Float = 19f,
     val lineSpacingMultiplier: Float = 1.9f
 )
@@ -75,7 +73,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
     )
     val uiState: StateFlow<ReaderUiState> = _uiState.asStateFlow()
 
-    fun loadChapter(chapterId: Int, targetSectionPn: String? = null, applyResume: Boolean = true) {
+    fun loadChapter(chapterId: Int, targetSectionPn: String? = null) {
         loadJob?.cancel()
         val requestChapterId = chapterId
         val generation = ++loadGeneration
@@ -92,7 +90,6 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                         chapter = null,
                         sections = emptyList(),
                         sectionNotesMap = emptyMap(),
-                        resumePn = null,
                         selectedEntity = null,
                         isEntityLoading = false,
                         showEntitySheet = false,
@@ -104,7 +101,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                 }
             }
 
-            val (ch, secs, notesMap, resumePn) = withContext(Dispatchers.IO) {
+            val (ch, secs, notesMap) = withContext(Dispatchers.IO) {
                 val chapter = repository.getChapterById(chapterId)
                 val rawSections = repository.getSectionsByChapter(chapterId)
                 val sections = rawSections.filter { sec ->
@@ -129,19 +126,13 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                 } else {
                     sections to rawNotesMap
                 }
-                val historyPn = if (applyResume && targetSectionPn.isNullOrBlank()) {
-                    repository.getReadingHistory(chapterId)?.first?.takeIf { it.isNotBlank() }
-                } else {
-                    null
-                }
 
                 data class LoadedChapter(
                     val chapter: Chapter?,
                     val sections: List<Section>,
-                    val notesMap: Map<Int, List<SanJiaZhuNote>>,
-                    val resumePn: String?
+                    val notesMap: Map<Int, List<SanJiaZhuNote>>
                 )
-                LoadedChapter(chapter, finalSections, finalMap, historyPn)
+                LoadedChapter(chapter, finalSections, finalMap)
             }
 
             // 同一章节的重复加载（切换合并段落）也不能让较早的旧结果覆盖新结果。
@@ -155,7 +146,6 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                     chapter = ch,
                     sections = secs,
                     sectionNotesMap = notesMap,
-                    resumePn = resumePn,
                     isBookmarked = isBm,
                     bookmarkedPnIndex = bmPn,
                     isLoading = false
@@ -254,8 +244,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleMergeParagraphs() {
         val newVal = !_uiState.value.mergeParagraphs
         _uiState.update { it.copy(mergeParagraphs = newVal) }
-        // 重新排版不应把阅读位置拉回上次记录的段落。
-        loadChapter(_uiState.value.chapterId, applyResume = false)
+        loadChapter(_uiState.value.chapterId)
     }
 
     fun toggleBookmark(currentPnIndex: String = "") {

@@ -49,11 +49,10 @@ class SanJiaZhuIndexerTest {
     )
 
     /**
-     * H1_0 被阅读器过滤掉；旧实现只在过滤后的列表里查找 sentence_id，
-     * 该注疏永远不会出现在任何段落下面。
+     * H1_0 为卷篇总标题，其序文与总论注疏不应向后滚动污染下文的子标题或首个正文段落。
      */
     @Test
-    fun noteOnFilteredHeadingRollsForwardToNextVisibleSection() {
+    fun noteOnChapterTitleHeadingDoesNotRollForward() {
         val all = listOf(
             section(1, "H1_0", type = "heading1", plain = "秦楚之际月表"),
             section(2, "H2_1", type = "heading2", plain = "太史公读秦楚之际"),
@@ -61,6 +60,23 @@ class SanJiaZhuIndexerTest {
         )
         val visible = listOf(all[1], all[2])
         val n = note(10, "H1_0")
+
+        val map = SanJiaZhuIndexer.index(all, visible, listOf(n))
+
+        assertTrue(map.isEmpty())
+    }
+
+    /**
+     * 锚点在子标题（H2）上的注疏，向后滚动到该标题下第一个可见的正文段落（而非挂在标题本身上）。
+     */
+    @Test
+    fun noteOnSubHeadingRollsForwardToFirstVisibleParagraph() {
+        val all = listOf(
+            section(1, "H2_1", type = "heading2", plain = "太史公读秦楚之际"),
+            section(2, "1.1", plain = "太史公读秦楚之际，曰：初作难。")
+        )
+        val visible = listOf(all[0], all[1])
+        val n = note(10, "H2_1")
 
         val map = SanJiaZhuIndexer.index(all, visible, listOf(n))
 

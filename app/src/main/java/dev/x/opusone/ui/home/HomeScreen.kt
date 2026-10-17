@@ -1,7 +1,10 @@
 package dev.x.opusone.ui.home
 
 import android.app.Application
+import android.content.Context
 import android.os.Build
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -105,12 +108,16 @@ val CATEGORY_FILTERS = CATEGORY_METAS.map { it.key }
 data class HomeUiState(
     val chapters: List<Chapter> = emptyList(),
     val selectedCategory: String = "本纪",
+    val showSummary: Boolean = false,
     val isLoading: Boolean = true
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = OpusOneRepository(application)
-    private val _uiState = MutableStateFlow(HomeUiState())
+    private val prefs = application.getSharedPreferences("opusone_prefs", Context.MODE_PRIVATE)
+    private val _uiState = MutableStateFlow(
+        HomeUiState(showSummary = prefs.getBoolean("show_chapter_summary", false))
+    )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
@@ -134,6 +141,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (_uiState.value.selectedCategory != category) {
             _uiState.update { it.copy(selectedCategory = category) }
         }
+    }
+
+    fun toggleShowSummary() {
+        val newVal = !_uiState.value.showSummary
+        prefs.edit().putBoolean("show_chapter_summary", newVal).apply()
+        _uiState.update { it.copy(showSummary = newVal) }
     }
 }
 
@@ -166,7 +179,14 @@ fun HomeScreen(
                     )
                 },
                 navigationIcon = {},
-                actions = {},
+                actions = {
+                    IconButton(onClick = { viewModel.toggleShowSummary() }) {
+                        Icon(
+                            imageVector = if (uiState.showSummary) Icons.AutoMirrored.Filled.List else Icons.AutoMirrored.Filled.MenuBook,
+                            contentDescription = cd(if (uiState.showSummary) "切换紧凑列表" else "显示篇章提要")
+                        )
+                    }
+                },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -234,6 +254,7 @@ fun HomeScreen(
                     }
                     ChapterListItem(
                         chapter = chapter,
+                        showSummary = uiState.showSummary,
                         shape = shape,
                         showDivider = index != sectionChapters.lastIndex,
                         onChapterClick = onNavigateToChapter
@@ -359,6 +380,7 @@ private fun CategoryFilterRow(
 @Composable
 private fun ChapterListItem(
     chapter: Chapter,
+    showSummary: Boolean,
     shape: androidx.compose.ui.graphics.Shape,
     showDivider: Boolean,
     onChapterClick: (Int) -> Unit
@@ -383,7 +405,7 @@ private fun ChapterListItem(
                         overflow = TextOverflow.Ellipsis
                     )
                 },
-                supportingContent = if (chapter.summary.isNotBlank()) {
+                supportingContent = if (showSummary && chapter.summary.isNotBlank()) {
                     {
                         Text(
                             text = chapter.summary.toScript(scriptMode),
